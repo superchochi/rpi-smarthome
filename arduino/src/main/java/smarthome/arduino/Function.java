@@ -14,6 +14,8 @@ public interface Function {
 
   public byte getType();
 
+  public byte getValueType();
+
   public Object getValue();
 
   public void setValue(Object value) throws DeviceException;

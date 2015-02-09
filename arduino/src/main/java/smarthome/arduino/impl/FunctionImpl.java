@@ -10,6 +10,7 @@ public class FunctionImpl implements Function {
   private String uid;
   private byte type;
   private Object value;
+  private byte valueType;
 
   public String getUid() {
     return uid;
@@ -21,6 +22,10 @@ public class FunctionImpl implements Function {
 
   public Object getValue() {
     return value;
+  }
+
+  public byte getValueType() {
+    return valueType;
   }
 
   public void setValue(Object value) throws DeviceException {
@@ -45,6 +50,10 @@ public class FunctionImpl implements Function {
 
   protected void setType(byte type) {
     this.type = type;
+  }
+
+  protected void setValueType(byte valueType) {
+    this.valueType = valueType;
   }
 
   @Override

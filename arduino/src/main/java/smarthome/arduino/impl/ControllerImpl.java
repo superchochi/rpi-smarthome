@@ -70,15 +70,16 @@ public class ControllerImpl implements Controller, SerialDataListener {
       if (device == null) {
         if (packet.getType() == Packet.PACKET_TYPE_DEVICE_ADD) {
           device = new DeviceImpl();
+          device.setUid(uid);
+          device.setController(this);
+          device.startRunning();
           devices.put(uid, device);
         } else {
           Logger.debug(TAG, "Unknown device and packet is not DEVICE_ADD! Skip...");
+          return;
         }
       }
     }
-    device.setUid(uid);
-    device.setController(this);
-    device.startRunning();
     device.newPacketRecieved(packet);
   }
 
