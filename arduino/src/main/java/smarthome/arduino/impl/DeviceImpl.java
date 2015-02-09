@@ -236,7 +236,7 @@ public class DeviceImpl implements Device, Runnable {
       break;
     }
     }
-    Logger.debug(TAG, "Data processed!" + dataType);
+    Logger.debug(TAG, "Data processed! " + dataType);
   }
 
   @Override
