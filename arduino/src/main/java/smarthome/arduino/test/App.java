@@ -9,11 +9,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.persistence.EntityManager;
+
 import smarthome.arduino.Device;
 import smarthome.arduino.Function;
 import smarthome.arduino.impl.ControllerImpl;
 import smarthome.arduino.impl.Packet;
 import smarthome.arduino.utils.Logger;
+import smarthome.db.DBManager;
 
 import com.pi4j.io.serial.SerialDataEvent;
 
@@ -31,6 +34,14 @@ public class App {
     functions.put("func1", Function.FUNCTION_TYPE_TEMPERATURE);
     functions.put("func2", Function.FUNCTION_TYPE_HUMIDITY);
     addDevice("dev01", functions);
+    Thread.sleep(1000);
+    EntityManager em = DBManager.getEntityManager();
+    em.getTransaction().begin();
+    for (Device d : controller.getDevices()) {
+      em.merge(d);
+    }
+    em.getTransaction().commit();
+    em.close();
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     try {
       while (true) {

@@ -94,11 +94,11 @@ public class TestDevice implements Runnable {
       switch (fType) {
       case Function.FUNCTION_TYPE_TEMPERATURE:
         functionsData.add(Function.VALUE_TYPE_BYTE);
-        functionsData.add((byte) 20);
+        functionsData.add((byte) 10);
         break;
       case Function.FUNCTION_TYPE_HUMIDITY:
         functionsData.add(Function.VALUE_TYPE_BYTE);
-        functionsData.add((byte) 50);
+        functionsData.add((byte) 60);
         break;
       }
     }

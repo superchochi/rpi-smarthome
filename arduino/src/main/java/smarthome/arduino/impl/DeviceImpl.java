@@ -3,25 +3,42 @@ package smarthome.arduino.impl;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
+
 import smarthome.arduino.Device;
 import smarthome.arduino.DeviceException;
 import smarthome.arduino.Function;
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
 
+@Entity
 public class DeviceImpl implements Device, Runnable {
 
   private static final String TAG = "Device";
 
+  //@GeneratedValue(strategy = GenerationType.IDENTITY)
+  //private int id;
+  @Transient
   private ControllerImpl controller;
+  @Id
   private String uid;
+  @OneToMany(mappedBy = "device", cascade = CascadeType.PERSIST)
   private List<FunctionImpl> functions = new LinkedList<FunctionImpl>();
-  private boolean online;
+  @Transient
+  private boolean online = false;
 
+  @Transient
   private Thread thr;
+  @Transient
   private volatile boolean running;
 
+  @Transient
   private LinkedList<Packet> packets = new LinkedList<Packet>();
+  @Transient
   private Object lockPackets = new Object();
 
   protected void startRunning() {
@@ -164,29 +181,29 @@ public class DeviceImpl implements Device, Runnable {
             functionUid[j] = data[i];
           }
           byte functionValueType = data[i++];
-          Object value = null;
+          byte[] value = null;
           switch (functionValueType) {
           case Function.VALUE_TYPE_BOOLEAN:
-            value = new Boolean(data[i] != 0);
+            value = new byte[1];
+            value[0] = data[i];
             break;
           case Function.VALUE_TYPE_BYTE:
-            value = new Byte(data[i]);
+            value = new byte[1];
+            value[0] = data[i];
             break;
           case Function.VALUE_TYPE_DOUBLE:
-            long l = 0;
+            value = new byte[8];
             for (int j = 0; j < 8; j++) {
-              l = (l << 8) + (0xff & data[i++]);
+              value[j] = data[i++];
             }
             i--;
-            value = new Double(Double.longBitsToDouble(l));
             break;
           case Function.VALUE_TYPE_INTEGER:
-            int n = 0;
+            value = new byte[4];
             for (int j = 0; j < 4; j++) {
-              n = (n << 8) + (0xff & data[i++]);
+              value[j] = data[i++];
             }
             i--;
-            value = new Integer(n);
             break;
           }
           FunctionImpl f = new FunctionImpl();
@@ -222,27 +239,27 @@ public class DeviceImpl implements Device, Runnable {
         throw new RuntimeException("Function: " + functionUidStr + " with type: " + functionType + " not found!");
       }
       byte functionValueType = data[i++];
-      Object value = null;
+      byte[] value = null;
       switch (functionValueType) {
       case Function.VALUE_TYPE_BOOLEAN:
-        value = new Boolean(data[i++] != 0);
+        value = new byte[1];
+        value[0] = data[i++];
         break;
       case Function.VALUE_TYPE_BYTE:
-        value = new Byte(data[i++]);
+        value = new byte[1];
+        value[0] = data[i++];
         break;
       case Function.VALUE_TYPE_DOUBLE:
-        long l = 0;
+        value = new byte[8];
         for (int j = 0; j < 8; j++) {
-          l = (l << 8) + (0xff & data[i++]);
+          value[j] = data[i++];
         }
-        value = new Double(Double.longBitsToDouble(l));
         break;
       case Function.VALUE_TYPE_INTEGER:
-        int n = 0;
+        value = new byte[4];
         for (int j = 0; j < 4; j++) {
-          n = (n << 8) + (0xff & data[i++]);
+          value[j] = data[i++];
         }
-        value = new Integer(n);
         break;
       }
       function.setValueInternal(value);
