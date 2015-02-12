@@ -86,31 +86,22 @@ public class DeviceImpl implements Device, Runnable {
 
   protected void newPacketRecieved(Packet packet) {
     synchronized (lockPackets) {
-      if (packet.getType() == Packet.PACKET_TYPE_SERIAL) {
-        if (packets.isEmpty()) {
-          Logger.warning(TAG, "Serial packet came but no starting one was found! Skip packet...");
-          return;
-        }
-      } else {
-        if (!packets.isEmpty()) {
-          Logger.warning(TAG, "Starting packet came before serial end! Remove old packets...");
-          packets.clear();
-        }
-      }
       packets.addLast(packet);
-      if (packet.isLast()) {
+      if (packets.size() == 1) {
         lockPackets.notify();
       }
     }
   }
 
   public void run() {
+    List<Packet> packets0 = new LinkedList<Packet>();
+    Packet p;
     while (running) {
-      byte type = Byte.MIN_VALUE;
-      byte[] data;
       synchronized (lockPackets) {
         try {
-          lockPackets.wait();
+          if (packets.isEmpty()) {
+            lockPackets.wait();
+          }
           if (!running) {
             break;
           }
@@ -118,31 +109,53 @@ public class DeviceImpl implements Device, Runnable {
           Logger.error(TAG, "Error waiting for packets!", e);
           break;
         }
-        data = new byte[packets.size() * Packet.PACKET_DATA_LENGTH];
-        int pos = 0;
-        for (Packet p : packets) {
-          byte[] packetData = p.getData();
-          if (pos == 0) {
-            type = p.getType();
+        p = packets.removeFirst();
+        if (p.getType() == Packet.PACKET_TYPE_SERIAL) {
+          if (packets0.isEmpty()) {
+            Logger.warning(TAG, "Serial packet came but no starting one was found! Skip packet...");
+            continue;
           }
-          for (int i = 0; i < packetData.length; i++, pos++) {
-            data[pos] = packetData[i];
+        } else {
+          if (!packets0.isEmpty()) {
+            Logger.warning(TAG, "Starting packet came before serial end! Remove old packets...");
+            packets0.clear();
           }
         }
-        packets.clear();
+        packets0.add(p);
       }
-      processData(type, data);
+      if (p.isLast()) {
+        List<Byte> dataBytes = new LinkedList<Byte>();
+        p = packets0.get(0);
+        byte type = p.getType();
+        for (int i = 0; i < packets0.size(); i++) {
+          byte[] pData = p.getData();
+          for (byte b : pData) {
+            dataBytes.add(b);
+          }
+        }
+        byte[] data = new byte[dataBytes.size()];
+        data = new byte[dataBytes.size()];
+        for (int i = 0; i < dataBytes.size(); i++) {
+          data[i] = dataBytes.get(i);
+        }
+        packets0.clear();
+        try {
+          processData(type, data);
+        } catch (Exception e) {
+          Logger.error(TAG, "Data processing failed!", e);
+        }
+      }
     }
     Logger.debug(TAG, "Device thread ended!");
   }
 
-  private void processData(byte dataType, byte[] data) {
+  private void processData(byte dataType, byte[] data) throws Exception {
     Logger.debug(TAG, "Processing data of type: " + dataType);
     switch (dataType) {
     case Packet.PACKET_TYPE_DEVICE_ADD: {
       functions.clear();
       for (int i = 0; i < data.length; i++) {
-        if (data[i] == Packet.PACKET_FUNCTION) {
+        if (data[i] == Packet.PACKET_FUNCTION_DATA) {
           i++;
           byte functionType = data[i++];
           byte functionUidLength = data[i++];
@@ -154,16 +167,17 @@ public class DeviceImpl implements Device, Runnable {
           Object value = null;
           switch (functionValueType) {
           case Function.VALUE_TYPE_BOOLEAN:
-            value = new Boolean(data[i++] != 0);
+            value = new Boolean(data[i] != 0);
             break;
           case Function.VALUE_TYPE_BYTE:
-            value = new Byte(data[i++]);
+            value = new Byte(data[i]);
             break;
           case Function.VALUE_TYPE_DOUBLE:
             long l = 0;
             for (int j = 0; j < 8; j++) {
               l = (l << 8) + (0xff & data[i++]);
             }
+            i--;
             value = new Double(Double.longBitsToDouble(l));
             break;
           case Function.VALUE_TYPE_INTEGER:
@@ -171,17 +185,18 @@ public class DeviceImpl implements Device, Runnable {
             for (int j = 0; j < 4; j++) {
               n = (n << 8) + (0xff & data[i++]);
             }
+            i--;
             value = new Integer(n);
             break;
           }
           FunctionImpl f = new FunctionImpl();
-          f.setUid(new String(functionUid));
+          f.setUid(new String(functionUid, Constants.CHARSET_NAME));
           f.setType(functionType);
           f.setValueType(functionValueType);
           f.setValueInternal(value);
           f.setDevice(this);
           functions.add(f);
-          Logger.debug(TAG, "New function processed!");
+          Logger.debug(TAG, "New function processed: " + f.getUid());
         }
       }
       Logger.info(TAG, "Device processed: " + this);
@@ -196,14 +211,15 @@ public class DeviceImpl implements Device, Runnable {
       for (int j = 0; j < functionUidLength; j++, i++) {
         functionUid[j] = data[i];
       }
+      String functionUidStr = new String(functionUid, Constants.CHARSET_NAME);
       for (FunctionImpl f : functions) {
-        if (f.getUid().equals(functionUid)) {
+        if (f.getUid().equals(functionUidStr)) {
           function = f;
           break;
         }
       }
       if (function == null || function.getType() != functionType) {
-        throw new RuntimeException("Function: " + functionUid + " with type: " + functionType + " not found!");
+        throw new RuntimeException("Function: " + functionUidStr + " with type: " + functionType + " not found!");
       }
       byte functionValueType = data[i++];
       Object value = null;
@@ -236,7 +252,7 @@ public class DeviceImpl implements Device, Runnable {
       break;
     }
     }
-    Logger.debug(TAG, "Data processed! " + dataType);
+    Logger.debug(TAG, "Data processed: " + dataType);
   }
 
   @Override

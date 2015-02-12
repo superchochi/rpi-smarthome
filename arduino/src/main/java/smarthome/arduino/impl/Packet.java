@@ -4,16 +4,26 @@ import smarthome.arduino.utils.Constants;
 
 public class Packet {
 
+  /*
+   * 5 bytes - device address (used for UID) 
+   * 1 byte - packet type (kind of packet info)
+   * 1 byte - flag for last packet of serial
+   * 20 bytes - data
+   */
+
   public static final int PACKET_LENGTH = 27;
   public static final int PACKET_UID_LENGTH = 5;
+  public static final int PACKET_TYPE_BYTE = PACKET_UID_LENGTH;
+  public static final int PACKET_IS_LAST_BYTE = PACKET_TYPE_BYTE + 1;
   public static final int PACKET_DATA_LENGTH = PACKET_LENGTH - PACKET_UID_LENGTH - 2;
+  public static final int PACKET_DATA_START = PACKET_IS_LAST_BYTE + 1;
   public static final byte PACKET_TYPE_PING = -1;
   public static final byte PACKET_TYPE_FUNCTION_VALUE = -2;
   public static final byte PACKET_TYPE_FUNCTION_VALUE_SET = -3;
   public static final byte PACKET_TYPE_DEVICE_ADD = -4;
   public static final byte PACKET_TYPE_SERIAL = -5;
 
-  public static final byte PACKET_FUNCTION = -100;
+  public static final byte PACKET_FUNCTION_DATA = -100;
   public static final byte PACKET_FUNCTION_UID_LENGTH = -101;
   public static final byte PACKET_FUNCTION_VALUE_TYPE = -102;
 
@@ -30,10 +40,10 @@ public class Packet {
     for (int i = 0; i < PACKET_UID_LENGTH; i++) {
       uid[i] = data[i];
     }
-    type = data[PACKET_UID_LENGTH];
-    isLast = (data[PACKET_UID_LENGTH + 1] == 1);
+    type = data[PACKET_TYPE_BYTE];
+    isLast = (data[PACKET_IS_LAST_BYTE] == 1);
     this.data = new byte[PACKET_DATA_LENGTH];
-    for (int i = 0, j = PACKET_UID_LENGTH + 2; i < PACKET_DATA_LENGTH; i++, j++) {
+    for (int i = 0, j = PACKET_DATA_START; i < PACKET_DATA_LENGTH; i++, j++) {
       this.data[i] = data[j];
     }
   }

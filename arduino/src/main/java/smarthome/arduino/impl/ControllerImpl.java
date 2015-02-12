@@ -6,6 +6,7 @@ import java.util.Map;
 
 import smarthome.arduino.Controller;
 import smarthome.arduino.Device;
+import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
 
 import com.pi4j.io.serial.Serial;
@@ -57,7 +58,7 @@ public class ControllerImpl implements Controller, SerialDataListener {
     String data = event.getData();
     Packet packet;
     try {
-      packet = new Packet(data.getBytes("Cp1252"));
+      packet = new Packet(data.getBytes(Constants.CHARSET_NAME));
     } catch (UnsupportedEncodingException e) {
       Logger.error(TAG, "Error getting bytes!", e);
       return;

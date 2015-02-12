@@ -1,9 +1,16 @@
-package smarthome.arduino;
+package smarthome.arduino.test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
+import smarthome.arduino.Device;
+import smarthome.arduino.Function;
 import smarthome.arduino.impl.ControllerImpl;
 import smarthome.arduino.impl.Packet;
 import smarthome.arduino.utils.Logger;
@@ -14,9 +21,16 @@ public class App {
 
   private static final String TAG = "ArduinoTestApp";
 
+  private static ControllerImpl controller = null;
+  private static List<TestDevice> devices = null;
+
   public static void main(String[] args) throws Exception {
-    System.out.println("Hello World!");
-    addTestDevice();
+    controller = new ControllerImpl();
+    devices = new LinkedList<TestDevice>();
+    Map<String, Byte> functions = new HashMap<String, Byte>();
+    functions.put("func1", Function.FUNCTION_TYPE_TEMPERATURE);
+    functions.put("func2", Function.FUNCTION_TYPE_HUMIDITY);
+    addDevice("dev01", functions);
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     try {
       while (true) {
@@ -27,12 +41,12 @@ public class App {
         }
         if (line.equalsIgnoreCase("exit")) {
           Logger.debug(TAG, "Exit!");
+          for (TestDevice device : devices) {
+            device.stopRunning();
+          }
           break;
         }
         System.out.println("Line read: " + line);
-        for (byte b : line.getBytes()) {
-          // System.out.println("byte: '" + b + "'");
-        }
       }
     } catch (IOException e) {
       Logger.error(TAG, "Error reading line!", e);
@@ -49,7 +63,7 @@ public class App {
     }
 
     ControllerImpl controller = new ControllerImpl();
-    byte[] b1 = { '1', '2', '3', '4', '5', Packet.PACKET_TYPE_DEVICE_ADD, 0, Packet.PACKET_FUNCTION,
+    byte[] b1 = { '1', '2', '3', '4', '5', Packet.PACKET_TYPE_DEVICE_ADD, 0, Packet.PACKET_FUNCTION_DATA,
         Function.FUNCTION_TYPE_TEMPERATURE, 20, '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5',
         '5', '5', '5' };
 
@@ -70,5 +84,16 @@ public class App {
     for (Device d : devices) {
       System.out.println(d);
     }
+  }
+
+  private static void addDevice(String uid, Map<String, Byte> functions) {
+    TestDevice device = new TestDevice(controller, uid);
+    for (Iterator<String> it = functions.keySet().iterator(); it.hasNext();) {
+      String fUid = it.next();
+      byte fType = functions.get(fUid);
+      device.addFunction(fType, fUid);
+    }
+    device.startRunning();
+    devices.add(device);
   }
 }

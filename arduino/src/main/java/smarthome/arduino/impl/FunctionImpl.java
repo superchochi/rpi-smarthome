@@ -3,8 +3,11 @@ package smarthome.arduino.impl;
 import smarthome.arduino.DeviceException;
 import smarthome.arduino.Function;
 import smarthome.arduino.utils.Constants;
+import smarthome.arduino.utils.Logger;
 
 public class FunctionImpl implements Function {
+
+  private static final String TAG = "Function";
 
   private DeviceImpl device;
   private String uid;
@@ -42,6 +45,7 @@ public class FunctionImpl implements Function {
 
   protected void setValueInternal(Object value) {
     this.value = value;
+    Logger.info(TAG, "Value updated: " + value);
   }
 
   protected void setUid(String uid) {
