@@ -6,12 +6,12 @@
 		<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
 		<class>smarthome.arduino.impl.DeviceImpl</class>
 		<class>smarthome.arduino.impl.FunctionImpl</class>
+		<class>smarthome.arduino.impl.StatisticEntry</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="org.sqlite.JDBC" />
 			<property name="javax.persistence.jdbc.url" value="jdbc:sqlite:smarthome.db" />
 
 			<property name="eclipselink.ddl-generation" value="create-tables" />
-			<property name="eclipselink.logging.level" value="ALL" />
 		</properties>
 	</persistence-unit>
 </persistence>

@@ -16,4 +16,6 @@ public interface Device {
 
   public void refresh() throws DeviceException;
 
+  public boolean isInitialized();
+
 }

@@ -8,6 +8,8 @@ import smarthome.arduino.DeviceException;
 import smarthome.arduino.Function;
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
+import smarthome.arduino.utils.Utils;
+import smarthome.db.DBManager;
 
 @Entity
 public class FunctionImpl implements Function {
@@ -32,31 +34,7 @@ public class FunctionImpl implements Function {
   }
 
   public Object getValue() {
-    Object val = null;
-    if (value != null) {
-      switch (valueType) {
-      case Function.VALUE_TYPE_BOOLEAN:
-        val = new Boolean(value[0] != 0);
-        break;
-      case Function.VALUE_TYPE_BYTE:
-        val = new Byte(value[0]);
-        break;
-      case Function.VALUE_TYPE_DOUBLE:
-        long l = 0;
-        for (int j = 0; j < 8; j++) {
-          l = (l << 8) + (0xff & value[j]);
-        }
-        val = new Double(Double.longBitsToDouble(l));
-        break;
-      case Function.VALUE_TYPE_INTEGER:
-        int n = 0;
-        for (int j = 0; j < 4; j++) {
-          n = (n << 8) + (0xff & value[j]);
-        }
-        val = new Integer(n);
-        break;
-      }
-    }
+    Object val = Utils.getValueFromByteArray(value, valueType);
     return val;
   }
 
@@ -79,9 +57,13 @@ public class FunctionImpl implements Function {
     }
   }
 
-  protected void setValueInternal(byte[] value) {
+  protected void setValueInternal(byte[] value, boolean storeInDB) {
     this.value = value;
     Logger.info(TAG, "Value updated: " + getValue());
+    if (storeInDB) {
+      DBManager.mergeObject(this);
+      DBManager.persistObject(new StatisticEntry(id, value, valueType, System.currentTimeMillis()));
+    }
   }
 
   protected void setUid(String uid) {
@@ -104,7 +86,7 @@ public class FunctionImpl implements Function {
     StringBuffer buff = new StringBuffer();
     buff.append("uid: ").append(uid).append(Constants.LINE_SEPARATOR);
     buff.append("type: ").append(type).append(Constants.LINE_SEPARATOR);
-    buff.append("value: ").append(getValue());
+    buff.append("value: ").append(Utils.getValueFromByteArray(value, valueType));
     return buff.toString();
   }
 

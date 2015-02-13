@@ -6,6 +6,7 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
@@ -14,8 +15,10 @@ import smarthome.arduino.DeviceException;
 import smarthome.arduino.Function;
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
+import smarthome.db.DBManager;
 
 @Entity
+@NamedQuery(name = "Devices.getAll", query = "SELECT c FROM DeviceImpl c")
 public class DeviceImpl implements Device, Runnable {
 
   private static final String TAG = "Device";
@@ -26,10 +29,11 @@ public class DeviceImpl implements Device, Runnable {
   private ControllerImpl controller;
   @Id
   private String uid;
-  @OneToMany(mappedBy = "device", cascade = CascadeType.PERSIST)
+  @OneToMany(mappedBy = "device", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<FunctionImpl> functions = new LinkedList<FunctionImpl>();
   @Transient
   private boolean online = false;
+  private boolean initialized = false;
 
   @Transient
   private Thread thr;
@@ -64,6 +68,10 @@ public class DeviceImpl implements Device, Runnable {
 
   public boolean isOnline() throws DeviceException {
     return online;
+  }
+
+  public boolean isInitialized() {
+    return initialized;
   }
 
   public void setFunctionValue(String functionUid, Object value) throws DeviceException {
@@ -210,12 +218,14 @@ public class DeviceImpl implements Device, Runnable {
           f.setUid(new String(functionUid, Constants.CHARSET_NAME));
           f.setType(functionType);
           f.setValueType(functionValueType);
-          f.setValueInternal(value);
           f.setDevice(this);
+          f.setValueInternal(value, false);
           functions.add(f);
           Logger.debug(TAG, "New function processed: " + f.getUid());
         }
       }
+      initialized = true;
+      DBManager.mergeObject(this);
       Logger.info(TAG, "Device processed: " + this);
       break;
     }
@@ -262,7 +272,7 @@ public class DeviceImpl implements Device, Runnable {
         }
         break;
       }
-      function.setValueInternal(value);
+      function.setValueInternal(value, true);
       break;
     }
     case Packet.PACKET_TYPE_FUNCTION_VALUE_SET: {

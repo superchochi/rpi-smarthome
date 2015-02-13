@@ -18,7 +18,7 @@ void setup()
 }
 
 void sendValue(byte value, byte sensor) {
-  char data[28];
+  char data[27];
   int i;
   for(i = 0; i < 5; i++) {
     data[i] = uid[i];
@@ -40,8 +40,6 @@ void sendValue(byte value, byte sensor) {
   for(; i < 27; i++) {
     data[i] = -1;
   }
-  data[i] = '\0';
-  //Serial.write(data);
   for(int j = 0; j < 27; j++) {
     Serial.write(data[j]);
   }

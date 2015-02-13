@@ -63,13 +63,13 @@ public class TestDevice implements Runnable {
   public void run() {
     addDevice();
     while (running) {
-      updateFunctionsValue();
       try {
         Thread.sleep(5000);
       } catch (Exception e) {
         Logger.error(TAG, "Error sleeping!", e);
         break;
       }
+      updateFunctionsValue();
     }
   }
 
