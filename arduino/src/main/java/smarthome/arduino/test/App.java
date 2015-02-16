@@ -33,6 +33,12 @@ public class App {
     functions.put("func1", Function.FUNCTION_TYPE_TEMPERATURE);
     functions.put("func2", Function.FUNCTION_TYPE_HUMIDITY);
     addDevice("dev01", functions);
+    for (TestDevice d : devices) {
+      //d.stopRunning(false);
+    }
+  }
+
+  private static void doInput() {
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     try {
       while (true) {
@@ -44,7 +50,7 @@ public class App {
         if (line.equalsIgnoreCase("exit")) {
           Logger.debug(TAG, "Exit!");
           for (TestDevice device : devices) {
-            device.stopRunning();
+            device.stopRunning(true);
           }
           break;
         }

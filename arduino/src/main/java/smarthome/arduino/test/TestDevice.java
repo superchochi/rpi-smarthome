@@ -42,10 +42,12 @@ public class TestDevice implements Runnable {
     thr.start();
   }
 
-  public void stopRunning() {
+  public void stopRunning(boolean interrupt) {
     running = false;
     try {
-      thr.interrupt();
+      if (interrupt) {
+        thr.interrupt();
+      }
       thr.join();
     } catch (Exception e) {
       Logger.error(TAG, "Error joining test device thread!", e);
@@ -64,7 +66,7 @@ public class TestDevice implements Runnable {
     addDevice();
     while (running) {
       try {
-        Thread.sleep(5000);
+        Thread.sleep(100);
       } catch (Exception e) {
         Logger.error(TAG, "Error sleeping!", e);
         break;
