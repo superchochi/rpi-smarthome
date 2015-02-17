@@ -4,22 +4,28 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
-import smarthome.arduino.DeviceException;
-import smarthome.arduino.Function;
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
 import smarthome.arduino.utils.Utils;
 import smarthome.db.DBManager;
 
 @Entity
-public class FunctionImpl implements Function {
+public class Function {
+
+  public static final byte VALUE_TYPE_INTEGER = -1;
+  public static final byte VALUE_TYPE_DOUBLE = -2;
+  public static final byte VALUE_TYPE_BYTE = -3;
+  public static final byte VALUE_TYPE_BOOLEAN = -4;
+
+  public static final byte FUNCTION_TYPE_TEMPERATURE = -100;
+  public static final byte FUNCTION_TYPE_HUMIDITY = -101;
 
   private static final String TAG = "Function";
 
   @Id
   private String id;
   @ManyToOne
-  private DeviceImpl device;
+  private Device device;
   private String uid;
   private byte type;
   private byte[] value;
@@ -50,7 +56,7 @@ public class FunctionImpl implements Function {
     return null;
   }
 
-  protected void setDevice(DeviceImpl device) {
+  protected void setDevice(Device device) {
     this.device = device;
     if (uid != null) {
       id = device.getUid() + "_" + uid;

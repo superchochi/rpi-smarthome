@@ -1,6 +1,6 @@
 package smarthome.arduino.utils;
 
-import smarthome.arduino.Function;
+import smarthome.arduino.impl.Function;
 
 public class Utils {
 

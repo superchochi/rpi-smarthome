@@ -10,27 +10,24 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
-import smarthome.arduino.Device;
-import smarthome.arduino.DeviceException;
-import smarthome.arduino.Function;
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
 import smarthome.db.DBManager;
 
 @Entity
-@NamedQuery(name = "Devices.getAll", query = "SELECT c FROM DeviceImpl c")
-public class DeviceImpl implements Device, Runnable {
+@NamedQuery(name = "Devices.getAll", query = "SELECT c FROM Device c")
+public class Device implements Runnable {
 
   private static final String TAG = "Device";
 
   //@GeneratedValue(strategy = GenerationType.IDENTITY)
   //private int id;
   @Transient
-  private ControllerImpl controller;
+  private Controller controller;
   @Id
   private String uid;
   @OneToMany(mappedBy = "device", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<FunctionImpl> functions = new LinkedList<FunctionImpl>();
+  private List<Function> functions = new LinkedList<Function>();
   @Transient
   private boolean online = false;
   private boolean initialized = false;
@@ -105,7 +102,7 @@ public class DeviceImpl implements Device, Runnable {
     this.uid = uid;
   }
 
-  protected void setController(ControllerImpl controller) {
+  protected void setController(Controller controller) {
     this.controller = controller;
   }
 
@@ -214,7 +211,7 @@ public class DeviceImpl implements Device, Runnable {
             i--;
             break;
           }
-          FunctionImpl f = new FunctionImpl();
+          Function f = new Function();
           f.setUid(new String(functionUid, Constants.CHARSET_NAME));
           f.setType(functionType);
           f.setValueType(functionValueType);
@@ -230,7 +227,7 @@ public class DeviceImpl implements Device, Runnable {
       break;
     }
     case Packet.PACKET_TYPE_FUNCTION_VALUE: {
-      FunctionImpl function = null;
+      Function function = null;
       int i = 0;
       byte functionType = data[i++];
       byte functionUidLength = data[i++];
@@ -239,7 +236,7 @@ public class DeviceImpl implements Device, Runnable {
         functionUid[j] = data[i];
       }
       String functionUidStr = new String(functionUid, Constants.CHARSET_NAME);
-      for (FunctionImpl f : functions) {
+      for (Function f : functions) {
         if (f.getUid().equals(functionUidStr)) {
           function = f;
           break;

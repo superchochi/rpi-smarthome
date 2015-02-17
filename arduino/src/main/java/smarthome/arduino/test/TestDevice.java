@@ -7,27 +7,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import com.pi4j.io.serial.SerialDataEvent;
-
-import smarthome.arduino.Function;
-import smarthome.arduino.impl.ControllerImpl;
+import smarthome.arduino.impl.Controller;
+import smarthome.arduino.impl.Function;
 import smarthome.arduino.impl.Packet;
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
+
+import com.pi4j.io.serial.SerialDataEvent;
 
 public class TestDevice implements Runnable {
 
   private static final String TAG = "TestDevice";
 
   private Random rand = new Random(System.currentTimeMillis());
-  private ControllerImpl controller = null;
+  private Controller controller = null;
   private byte[] uid = null;
   private Map<byte[], Byte> functions = new HashMap<byte[], Byte>();
 
   private Thread thr;
   private volatile boolean running = false;
 
-  public TestDevice(ControllerImpl controller, String uid) {
+  public TestDevice(Controller controller, String uid) {
     this.controller = controller;
     try {
       this.uid = uid.getBytes(Constants.CHARSET_NAME);

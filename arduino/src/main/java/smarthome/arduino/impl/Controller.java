@@ -2,45 +2,60 @@ package smarthome.arduino.impl;
 
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import smarthome.arduino.Controller;
-import smarthome.arduino.Device;
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
+import smarthome.db.DBManager;
 
 import com.pi4j.io.serial.Serial;
 import com.pi4j.io.serial.SerialDataEvent;
 import com.pi4j.io.serial.SerialDataListener;
-import com.pi4j.io.serial.SerialFactory;
 
-public class ControllerImpl implements Controller, SerialDataListener {
+public class Controller implements SerialDataListener {
 
   private static final String TAG = "Controller";
 
-  private Serial serial;
+  private Serial serial = null;
 
-  private Map<String, DeviceImpl> devices = new HashMap<String, DeviceImpl>();
+  private Map<String, Device> devices = new HashMap<String, Device>();
 
-  protected void init() {
-    serial = SerialFactory.createInstance();
-    if (serial.isOpen()) {
-      serial.close();
+  public void init() {
+    List<Device> devs = DBManager.getObjects("Devices.getAll", Device.class, null);
+    synchronized (devices) {
+      for (Device d : devs) {
+        devices.put(d.getUid(), d);
+      }
     }
-    serial.open(Serial.DEFAULT_COM_PORT, 115200);
-    serial.addListener(this);
+    /*try {
+      serial = SerialFactory.createInstance();
+      if (serial.isOpen()) {
+        serial.close();
+      }
+      serial.open(Serial.DEFAULT_COM_PORT, 115200);
+      serial.addListener(this);
+    } catch (Exception e) {
+      Logger.error(TAG, "Serial error!", e);
+    }*/
   }
 
-  protected void close() {
-    serial.removeListener(this);
+  public void close() {
+    if (serial != null) {
+      try {
+        serial.removeListener(this);
+        serial.close();
+        serial = null;
+      } catch (Exception e) {
+        Logger.error(TAG, "Serial error!", e);
+      }
+    }
     synchronized (devices) {
-      for (DeviceImpl device : devices.values()) {
+      for (Device device : devices.values()) {
         device.stopRunning();
       }
       devices.clear();
     }
-    serial.close();
-    serial = null;
   }
 
   public Device[] getDevices() {
@@ -65,12 +80,12 @@ public class ControllerImpl implements Controller, SerialDataListener {
     }
     Logger.debug(TAG, "Packet recieved: " + packet);
     String uid = packet.getUid();
-    DeviceImpl device;
+    Device device;
     synchronized (devices) {
       device = devices.get(uid);
       if (device == null) {
         if (packet.getType() == Packet.PACKET_TYPE_DEVICE_ADD) {
-          device = new DeviceImpl();
+          device = new Device();
           device.setUid(uid);
           device.setController(this);
           device.startRunning();

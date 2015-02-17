@@ -9,9 +9,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import smarthome.arduino.Device;
-import smarthome.arduino.Function;
-import smarthome.arduino.impl.ControllerImpl;
+import smarthome.arduino.impl.Controller;
+import smarthome.arduino.impl.Device;
+import smarthome.arduino.impl.Function;
 import smarthome.arduino.impl.Packet;
 import smarthome.arduino.impl.StatisticEntry;
 import smarthome.arduino.utils.Logger;
@@ -23,11 +23,11 @@ public class App {
 
   private static final String TAG = "ArduinoTestApp";
 
-  private static ControllerImpl controller = null;
+  private static Controller controller = null;
   private static List<TestDevice> devices = null;
 
   public static void main(String[] args) throws Exception {
-    controller = new ControllerImpl();
+    controller = new Controller();
     devices = new LinkedList<TestDevice>();
     Map<String, Byte> functions = new HashMap<String, Byte>();
     functions.put("func1", Function.FUNCTION_TYPE_TEMPERATURE);
@@ -76,7 +76,7 @@ public class App {
       output[i] = (byte) (lng >> ((7 - i) * 8));
     }
 
-    ControllerImpl controller = new ControllerImpl();
+    Controller controller = new Controller();
     byte[] b1 = { '1', '2', '3', '4', '5', Packet.PACKET_TYPE_DEVICE_ADD, 0, Packet.PACKET_FUNCTION_DATA,
         Function.FUNCTION_TYPE_TEMPERATURE, 20, '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5',
         '5', '5', '5' };
