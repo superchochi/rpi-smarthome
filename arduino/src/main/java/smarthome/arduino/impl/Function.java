@@ -3,6 +3,9 @@ package smarthome.arduino.impl;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
@@ -10,6 +13,7 @@ import smarthome.arduino.utils.Utils;
 import smarthome.db.DBManager;
 
 @Entity
+@XmlRootElement
 public class Function {
 
   public static final byte VALUE_TYPE_INTEGER = -1;
@@ -23,12 +27,20 @@ public class Function {
   private static final String TAG = "Function";
 
   @Id
+  @XmlTransient
   private String id;
+
   @ManyToOne
+  @XmlTransient
   private Device device;
+
+  @XmlElement
   private String uid;
+  @XmlElement
   private byte type;
+  @XmlTransient
   private byte[] value;
+  @XmlElement
   private byte valueType;
 
   public String getUid() {
@@ -39,6 +51,7 @@ public class Function {
     return type;
   }
 
+  @XmlElement
   public Object getValue() {
     Object val = Utils.getValueFromByteArray(value, valueType);
     return val;

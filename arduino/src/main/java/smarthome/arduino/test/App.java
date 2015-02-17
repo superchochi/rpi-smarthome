@@ -33,8 +33,9 @@ public class App {
     functions.put("func1", Function.FUNCTION_TYPE_TEMPERATURE);
     functions.put("func2", Function.FUNCTION_TYPE_HUMIDITY);
     addDevice("dev01", functions);
+    Thread.sleep(10000);
     for (TestDevice d : devices) {
-      //d.stopRunning(false);
+      d.stopRunning(false);
     }
   }
 
