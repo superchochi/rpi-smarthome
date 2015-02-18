@@ -65,7 +65,7 @@ void loop(void)
       for(int i = 0; i < SERIAL_PAYLOAD; i++) {
         Serial.write(radioData[ADDRESS_LENGTH + i]);
       }
-      Serial.flush();
+      //Serial.println();
     }
   }
 }
