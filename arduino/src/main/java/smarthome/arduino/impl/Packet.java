@@ -49,7 +49,11 @@ public class Packet {
   }
 
   public String getUid() {
-    return new String(uid);
+    char[] chars = new char[uid.length];
+    for (int i = 0; i < chars.length; i++) {
+      chars[i] = (char) uid[i];
+    }
+    return new String(chars);
   }
 
   public byte getType() {

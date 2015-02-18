@@ -24,10 +24,15 @@ public class DBManager {
 
   private static EntityManagerFactory entityManagerFactory;
 
-  static {
+  public static void open() {
     entityManagerFactory = Persistence.createEntityManagerFactory("smarthome", System.getProperties());
     setPragmas();
     dumpPragmas();
+  }
+
+  public static void close() {
+    entityManagerFactory.close();
+    entityManagerFactory = null;
   }
 
   private static synchronized void setPragmas() {
@@ -53,6 +58,9 @@ public class DBManager {
   }
 
   private static EntityManager getEntityManager() {
+    if (entityManagerFactory == null) {
+      open();
+    }
     return entityManagerFactory.createEntityManager();
   }
 
@@ -60,7 +68,6 @@ public class DBManager {
     EntityManager em = null;
     try {
       em = getEntityManager();
-      Logger.debug(TAG, "foreign_keys: " + em.createNativeQuery("PRAGMA foreign_keys").getSingleResult());
       Logger.debug(TAG, "page_size: " + em.createNativeQuery("PRAGMA page_size").getSingleResult());
       Logger.debug(TAG, "max_page_count: " + em.createNativeQuery("PRAGMA max_page_count").getSingleResult());
     } catch (Exception e) {

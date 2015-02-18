@@ -10,7 +10,6 @@ import java.util.Random;
 import smarthome.arduino.impl.Controller;
 import smarthome.arduino.impl.Function;
 import smarthome.arduino.impl.Packet;
-import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
 
 import com.pi4j.io.serial.SerialDataEvent;
@@ -30,7 +29,7 @@ public class TestDevice implements Runnable {
   public TestDevice(Controller controller, String uid) {
     this.controller = controller;
     try {
-      this.uid = uid.getBytes(Constants.CHARSET_NAME);
+      this.uid = uid.getBytes();
     } catch (Exception e) {
       Logger.error(TAG, "Charset name error!", e);
     }
@@ -56,7 +55,11 @@ public class TestDevice implements Runnable {
 
   public void addFunction(byte functionType, String functionUid) {
     try {
-      functions.put(functionUid.getBytes(Constants.CHARSET_NAME), functionType);
+      byte[] bytes = new byte[functionUid.length()];
+      for (int i = 0; i < bytes.length; i++) {
+        bytes[i] = (byte) functionUid.charAt(i);
+      }
+      functions.put(bytes, functionType);
     } catch (Exception e) {
       Logger.error(TAG, "Charset name error!", e);
     }
@@ -66,7 +69,7 @@ public class TestDevice implements Runnable {
     addDevice();
     while (running) {
       try {
-        Thread.sleep(100);
+        Thread.sleep(5000);
       } catch (Exception e) {
         Logger.error(TAG, "Error sleeping!", e);
         break;
@@ -133,7 +136,11 @@ public class TestDevice implements Runnable {
     }
     for (byte[] b : packets) {
       try {
-        controller.dataReceived(new SerialDataEvent(new Object(), new String(b, Constants.CHARSET_NAME)));
+        char[] chars = new char[b.length];
+        for (int i = 0; i < chars.length; i++) {
+          chars[i] = (char) b[i];
+        }
+        controller.dataReceived(new SerialDataEvent(new Object(), new String(chars)));
       } catch (Exception e) {
         Logger.error(TAG, "Charset name error!", e);
       }
@@ -174,7 +181,11 @@ public class TestDevice implements Runnable {
         packet[i++] = 0;
       }
       try {
-        controller.dataReceived(new SerialDataEvent(new Object(), new String(packet, Constants.CHARSET_NAME)));
+        char[] chars = new char[packet.length];
+        for (i = 0; i < chars.length; i++) {
+          chars[i] = (char) packet[i];
+        }
+        controller.dataReceived(new SerialDataEvent(new Object(), new String(chars)));
       } catch (Exception e) {
         Logger.error(TAG, "Charset name error!", e);
       }

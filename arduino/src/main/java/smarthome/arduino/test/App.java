@@ -28,6 +28,7 @@ public class App {
 
   public static void main(String[] args) throws Exception {
     controller = new Controller();
+    controller.init();
     devices = new LinkedList<TestDevice>();
     Map<String, Byte> functions = new HashMap<String, Byte>();
     functions.put("func1", Function.FUNCTION_TYPE_TEMPERATURE);
@@ -35,7 +36,7 @@ public class App {
     addDevice("dev01", functions);
     Thread.sleep(10000);
     for (TestDevice d : devices) {
-      d.stopRunning(false);
+      //d.stopRunning(false);
     }
   }
 

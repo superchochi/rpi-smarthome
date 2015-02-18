@@ -47,6 +47,7 @@ void setup()
   radio.printDetails();
   
   //Serial.println("sender started");
+  delay(2000);
   byte* data = pairDevice();
   radio.stopListening();
   radio.write(data, RADIO_PAYLOAD);
@@ -93,6 +94,7 @@ byte* sendValue(byte value, byte sensor) {
     data[i] = ctrlAddr[i];
     data[i + ADDRESS_LENGTH] = address[i];
   }
+  i += ADDRESS_LENGTH;
   data[i++] = -2;
   data[i++] = 1;
   data[i++] = sensor == 1 ? -100 : -101;

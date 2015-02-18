@@ -199,9 +199,9 @@ public class Device implements Runnable {
           i++;
           byte functionType = data[i++];
           byte functionUidLength = data[i++];
-          byte[] functionUid = new byte[functionUidLength];
+          char[] functionUid = new char[functionUidLength];
           for (int j = 0; j < functionUidLength; j++, i++) {
-            functionUid[j] = data[i];
+            functionUid[j] = (char) data[i];
           }
           byte functionValueType = data[i++];
           byte[] value = null;
@@ -230,7 +230,7 @@ public class Device implements Runnable {
             break;
           }
           Function f = new Function();
-          f.setUid(new String(functionUid, Constants.CHARSET_NAME));
+          f.setUid(new String(functionUid));
           f.setType(functionType);
           f.setValueType(functionValueType);
           f.setDevice(this);
@@ -249,11 +249,11 @@ public class Device implements Runnable {
       int i = 0;
       byte functionType = data[i++];
       byte functionUidLength = data[i++];
-      byte[] functionUid = new byte[functionUidLength];
+      char[] functionUid = new char[functionUidLength];
       for (int j = 0; j < functionUidLength; j++, i++) {
-        functionUid[j] = data[i];
+        functionUid[j] = (char) data[i];
       }
-      String functionUidStr = new String(functionUid, Constants.CHARSET_NAME);
+      String functionUidStr = new String(functionUid);
       for (Function f : functions) {
         if (f.getUid().equals(functionUidStr)) {
           function = f;
