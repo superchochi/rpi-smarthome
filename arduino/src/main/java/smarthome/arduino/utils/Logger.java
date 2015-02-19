@@ -12,7 +12,7 @@ public class Logger {
   private static final int WARNING = 2;
   private static final int ERROR = 1;
 
-  private static int level = DEBUG;
+  private static int level = Integer.getInteger("smarthome.logger.level", INFO);
 
   private static final Object sync = new Object();
 
