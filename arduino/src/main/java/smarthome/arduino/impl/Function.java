@@ -1,8 +1,12 @@
 package smarthome.arduino.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQuery;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -13,6 +17,7 @@ import smarthome.arduino.utils.Utils;
 import smarthome.db.DBManager;
 
 @Entity
+@NamedQuery(name = "Function.updateValue", query = "UPDATE Function f SET f.value = :value WHERE f.id = :id")
 @XmlRootElement
 public class Function {
 
@@ -71,23 +76,26 @@ public class Function {
 
   protected void setDevice(Device device) {
     this.device = device;
-    if (uid != null) {
+    if (uid != null && device != null) {
       id = device.getUid() + "_" + uid;
     }
   }
 
   protected void setValueInternal(byte[] value, boolean storeInDB) {
     this.value = value;
-    Logger.info(TAG, "Value updated: " + getValue());
+    Logger.info(TAG, id + " > Value updated: " + getValue());
     if (storeInDB) {
-      DBManager.mergeObject(this);
+      Map<String, Object> params = new HashMap<String, Object>();
+      params.put("value", value);
+      params.put("id", id);
+      DBManager.updateObject("Function.updateValue", this.getClass(), params);
       DBManager.persistObject(new StatisticEntry(id, value, valueType, System.currentTimeMillis()));
     }
   }
 
   protected void setUid(String uid) {
     this.uid = uid;
-    if (device != null) {
+    if (device != null && uid != null) {
       id = device.getUid() + "_" + uid;
     }
   }

@@ -35,6 +35,8 @@ public class Controller implements SerialDataListener, Runnable {
     synchronized (devices) {
       for (Device d : devs) {
         devices.put(d.getUid(), d);
+        d.startRunning();
+        Logger.info(TAG, "Device loaded: " + d.getUid());
       }
     }
     try {
@@ -62,8 +64,9 @@ public class Controller implements SerialDataListener, Runnable {
       }
     }
     synchronized (devices) {
-      for (Device device : devices.values()) {
-        device.stopRunning();
+      for (Device d : devices.values()) {
+        d.stopRunning();
+        Logger.debug(TAG, "Device stopped: " + d.getUid());
       }
       devices.clear();
     }
@@ -152,6 +155,7 @@ public class Controller implements SerialDataListener, Runnable {
             }
           }
         }
+        Logger.debug(TAG, "Packet added to device.");
         device.newPacketRecieved(packet);
       }
     } catch (Throwable t) {

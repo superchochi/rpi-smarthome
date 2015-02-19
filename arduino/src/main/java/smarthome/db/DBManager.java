@@ -210,6 +210,33 @@ public class DBManager {
     return null;
   }
 
+  public static synchronized <T> void updateObject(String namedQuery, Class<T> clazz, Map<String, ?> params) {
+    EntityManager em = null;
+    try {
+      em = getEntityManager();
+      em.getTransaction().begin();
+      TypedQuery<T> query = em.createNamedQuery(namedQuery, clazz);
+      if (params != null) {
+        for (Iterator<String> it = params.keySet().iterator(); it.hasNext();) {
+          String key = it.next();
+          Object value = params.get(key);
+          query.setParameter(key, value);
+        }
+      }
+      query.executeUpdate();
+      em.getTransaction().commit();
+    } catch (Exception e) {
+      Logger.error(TAG, "Error updating object from query: " + namedQuery + "!", e);
+    } finally {
+      if (em != null && em.isOpen()) {
+        try {
+          em.close();
+        } catch (Exception e) {
+        }
+      }
+    }
+  }
+
   private static boolean isDBFullException(RollbackException e) {
     if (e.getCause() instanceof DatabaseException) {
       DatabaseException dbe = (DatabaseException) e.getCause();

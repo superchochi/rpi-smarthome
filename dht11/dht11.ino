@@ -126,11 +126,13 @@ void loop()
   {
     case DHTLIB_OK: {
       //Serial.println("OK");
+      delay(100);
       byte* data = sendValue((byte) DHT11.temperature, 1);
       radio.stopListening();
       radio.write(data, RADIO_PAYLOAD);
       radio.startListening();
       delete[] data;
+      delay(100);
       data = sendValue((byte) DHT11.humidity, 2);
       radio.stopListening();
       radio.write(data, RADIO_PAYLOAD);
@@ -153,7 +155,7 @@ void loop()
     }
   }
   
-  delay(10000);
+  delay(60000);
 }
 
 int my_putc( char c, FILE *t) {

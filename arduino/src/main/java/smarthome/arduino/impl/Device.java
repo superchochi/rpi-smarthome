@@ -71,6 +71,11 @@ public class Device implements Runnable {
     synchronized (lockPackets) {
       lockPackets.notify();
     }
+    try {
+      thr.join();
+    } catch (InterruptedException e) {
+      Logger.error(TAG, uid + " > Thread join failed!" + e);
+    }
   }
 
   public String getUid() {
@@ -134,6 +139,7 @@ public class Device implements Runnable {
   }
 
   public void run() {
+    Logger.debug(TAG, uid + " > Device thread started!");
     List<Packet> packets0 = new LinkedList<Packet>();
     Packet p;
     while (running) {
@@ -146,18 +152,18 @@ public class Device implements Runnable {
             break;
           }
         } catch (InterruptedException e) {
-          Logger.error(TAG, "Error waiting for packets!", e);
+          Logger.error(TAG, uid + " > Error waiting for packets!", e);
           break;
         }
         p = packets.removeFirst();
         if (p.getType() == Packet.PACKET_TYPE_SERIAL) {
           if (packets0.isEmpty()) {
-            Logger.warning(TAG, "Serial packet came but no starting one was found! Skip packet...");
+            Logger.warning(TAG, uid + " > Serial packet came but no starting one was found! Skip packet...");
             continue;
           }
         } else {
           if (!packets0.isEmpty()) {
-            Logger.warning(TAG, "Starting packet came before serial end! Remove old packets...");
+            Logger.warning(TAG, uid + " > Starting packet came before serial end! Remove old packets...");
             packets0.clear();
           }
         }
@@ -182,15 +188,15 @@ public class Device implements Runnable {
         try {
           processData(type, data);
         } catch (Exception e) {
-          Logger.error(TAG, "Data processing failed!", e);
+          Logger.error(TAG, uid + " > Data processing failed!", e);
         }
       }
     }
-    Logger.debug(TAG, "Device thread ended!");
+    Logger.debug(TAG, uid + " > Device thread ended!");
   }
 
   private void processData(byte dataType, byte[] data) throws Exception {
-    Logger.debug(TAG, "Processing data of type: " + dataType);
+    Logger.debug(TAG, uid + " > Processing data of type: " + dataType);
     switch (dataType) {
     case Packet.PACKET_TYPE_DEVICE_ADD: {
       functions.clear();
@@ -236,12 +242,13 @@ public class Device implements Runnable {
           f.setDevice(this);
           f.setValueInternal(value, false);
           functions.add(f);
-          Logger.debug(TAG, "New function processed: " + f.getUid());
+          Logger.debug(TAG, uid + " > New function processed: " + f.getUid());
         }
       }
       initialized = true;
+      online = true;
       DBManager.mergeObject(this);
-      Logger.info(TAG, "Device processed: " + this);
+      Logger.info(TAG, uid + " > Device add processed: " + this);
       break;
     }
     case Packet.PACKET_TYPE_FUNCTION_VALUE: {
@@ -288,13 +295,17 @@ public class Device implements Runnable {
         break;
       }
       function.setValueInternal(value, true);
+      if (!online) {
+        online = true;
+      }
+      Logger.debug(TAG, uid + " > Device function updated.");
       break;
     }
     case Packet.PACKET_TYPE_FUNCTION_VALUE_SET: {
       break;
     }
     }
-    Logger.debug(TAG, "Data processed: " + dataType);
+    Logger.debug(TAG, uid + " > Data processed: " + dataType);
   }
 
   @Override
