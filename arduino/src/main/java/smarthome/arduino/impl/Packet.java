@@ -5,18 +5,17 @@ import smarthome.arduino.utils.Constants;
 public class Packet {
 
   /*
-   * 5 bytes - device address (used for UID) 
-   * 1 byte - packet type (kind of packet info)
-   * 1 byte - flag for last packet of serial
-   * 20 bytes - data
+   * 5 bytes - device address (used for UID) 1 byte - packet type (kind of packet info) 1 byte - flag for last packet of
+   * serial 20 bytes - data
    */
 
   public static final int PACKET_LENGTH = 27;
   public static final int PACKET_UID_LENGTH = 5;
-  public static final int PACKET_TYPE_BYTE = PACKET_UID_LENGTH;
-  public static final int PACKET_IS_LAST_BYTE = PACKET_TYPE_BYTE + 1;
+  public static final int PACKET_TYPE_INDEX = PACKET_UID_LENGTH;
+  public static final int PACKET_IS_LAST_INDEX = PACKET_TYPE_INDEX + 1;
   public static final int PACKET_DATA_LENGTH = PACKET_LENGTH - PACKET_UID_LENGTH - 2;
-  public static final int PACKET_DATA_START = PACKET_IS_LAST_BYTE + 1;
+  public static final int PACKET_DATA_START_INDEX = PACKET_IS_LAST_INDEX + 1;
+
   public static final byte PACKET_TYPE_PING = -1;
   public static final byte PACKET_TYPE_FUNCTION_VALUE = -2;
   public static final byte PACKET_TYPE_FUNCTION_VALUE_SET = -3;
@@ -40,10 +39,13 @@ public class Packet {
     for (int i = 0; i < PACKET_UID_LENGTH; i++) {
       uid[i] = data[i];
     }
-    type = data[PACKET_TYPE_BYTE];
-    isLast = (data[PACKET_IS_LAST_BYTE] == 1);
+    type = data[PACKET_TYPE_INDEX];
+    if (!isValidType(type)) {
+      throw new IllegalArgumentException("Packet type unknown: " + type);
+    }
+    isLast = (data[PACKET_IS_LAST_INDEX] == 1);
     this.data = new byte[PACKET_DATA_LENGTH];
-    for (int i = 0, j = PACKET_DATA_START; i < PACKET_DATA_LENGTH; i++, j++) {
+    for (int i = 0, j = PACKET_DATA_START_INDEX; i < PACKET_DATA_LENGTH; i++, j++) {
       this.data[i] = data[j];
     }
   }
@@ -66,6 +68,19 @@ public class Packet {
 
   public byte[] getData() {
     return data;
+  }
+
+  public static boolean isValidType(byte type) {
+    switch (type) {
+    case PACKET_TYPE_DEVICE_ADD:
+    case PACKET_TYPE_FUNCTION_VALUE:
+    case PACKET_TYPE_FUNCTION_VALUE_SET:
+    case PACKET_TYPE_PING:
+    case PACKET_TYPE_SERIAL:
+      return true;
+    default:
+      return false;
+    }
   }
 
   @Override

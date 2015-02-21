@@ -2,6 +2,7 @@
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
+#define INTERVAL 60000
 #define DATA_PAYLOAD 27
 #define RADIO_PAYLOAD 32
 #define ADDRESS_LENGTH 5
@@ -9,10 +10,13 @@
 #define DHT_VCC 3
 #define NRF_VCC 8
 #define NRF_GND 7
+#define ACK_SIZE 10
+
+byte ack[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
 
 dht11 DHT11;
 
-byte address[] = { 'd','e','v','0','1' };
+byte address[] = { 'd', 'e', 'v', '0', '1' };
 byte ctrlAddr[] = { '1', '1', '1', '1', '1' };
 
 char tempUid[] = { 't', 'e', 'm', 'p', '1' };
@@ -38,7 +42,7 @@ void setup()
   fdevopen(&my_putc, 0);
   
   radio.begin();
-  radio.setRetries(15,15);
+  radio.setRetries(0,15);
   radio.setAutoAck(false);
   radio.setPayloadSize(RADIO_PAYLOAD);
   radio.openWritingPipe(pipes[1]);
@@ -50,9 +54,10 @@ void setup()
   delay(2000);
   byte* data = pairDevice();
   radio.stopListening();
-  radio.write(data, RADIO_PAYLOAD);
+  boolean sent = writeData(data);
   radio.startListening();
-  delete[] data;
+  Serial.print("Device add sent: ");
+  Serial.println(sent);
 }
 
 byte* pairDevice() {
@@ -87,7 +92,7 @@ byte* pairDevice() {
   return data;
 }
 
-byte* sendValue(byte value, byte sensor) {
+byte* prepareValue(byte value, byte sensor) {
   byte* data = new byte[RADIO_PAYLOAD];
   int i;
   for(i = 0; i < 5; i++) {
@@ -120,25 +125,27 @@ byte* sendValue(byte value, byte sensor) {
 
 void loop()
 {
+  long time = millis();
   int chk = DHT11.read(DHT_DATA);
   //Serial.print("Read sensor: ");
   switch (chk)
   {
     case DHTLIB_OK: {
       //Serial.println("OK");
-      delay(100);
-      byte* data = sendValue((byte) DHT11.temperature, 1);
+      delay(10);
+      byte* data = prepareValue((byte) DHT11.temperature, 1);
       radio.stopListening();
-      radio.write(data, RADIO_PAYLOAD);
+      boolean sent = writeData(data);
       radio.startListening();
-      delete[] data;
-      delay(100);
-      data = sendValue((byte) DHT11.humidity, 2);
+      Serial.print("Temperature sent: ");
+      Serial.println(sent);
+      delay(10);
+      data = prepareValue((byte) DHT11.humidity, 2);
       radio.stopListening();
-      radio.write(data, RADIO_PAYLOAD);
+      sent = writeData(data);
       radio.startListening();
-      delete[] data;
-      //Serial.println("dht read");
+      Serial.print("Humidity sent: ");
+      Serial.println(sent);
       break;
     }
     case DHTLIB_ERROR_CHECKSUM: {
@@ -155,7 +162,51 @@ void loop()
     }
   }
   
-  delay(60000);
+  delay(INTERVAL - (millis() - time));
+}
+
+boolean writeData(byte* data) {
+  radio.stopListening();
+  radio.write(data, RADIO_PAYLOAD);
+  radio.startListening();
+  boolean ack = waitAck();
+  delete[] data;
+  return ack;
+}
+
+boolean waitAck() {
+  long m = millis() + 100;
+  boolean sent = false;
+  while(millis() < m) {
+    if(radio.available()) {
+      byte radioData[RADIO_PAYLOAD];
+      bool ok = false;
+      while(!ok) {
+        ok = radio.read(radioData, RADIO_PAYLOAD);
+      }
+      if(ok && checkAck(ctrlAddr, radioData)) {
+        sent = true;
+        break;
+      }
+    }
+  }
+  return sent;
+}
+
+boolean checkAck(byte* ctrlAddr, byte* data) {
+  int i;
+  for(i = 0; i < ADDRESS_LENGTH; i++) {
+    if(!(ctrlAddr[i] == data[i]) || !(address[i] == data[i + ADDRESS_LENGTH])) {
+      return false;
+    }
+  }
+  i += ADDRESS_LENGTH;
+  for(; i < ACK_SIZE; i++) {
+    if(data[i] != ack[i]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 int my_putc( char c, FILE *t) {

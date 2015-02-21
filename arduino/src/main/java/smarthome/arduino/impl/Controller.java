@@ -131,8 +131,10 @@ public class Controller implements SerialDataListener, Runnable {
           try {
             packet = new Packet(packetBytes);
           } catch (Exception e) {
-            Logger.error(TAG, "Error parsing packet! Empty data buffer...", e);
-            queuedBytes.clear();
+            Logger.error(TAG, "Error parsing packet! Remove bytes from buffer until valid byte for type occurs", e);
+            while (!queuedBytes.isEmpty() && !Packet.isValidType(queuedBytes.getFirst())) {
+              queuedBytes.removeFirst();
+            }
             continue;
           }
         }

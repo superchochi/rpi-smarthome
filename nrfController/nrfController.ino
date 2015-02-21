@@ -4,6 +4,9 @@
 #define SERIAL_PAYLOAD 27
 #define RADIO_PAYLOAD 32
 #define ADDRESS_LENGTH 5
+#define ACK_SIZE 10
+
+byte ack[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
 
 byte address[] = {'1','1','1','1','1'};
 
@@ -23,7 +26,7 @@ void setup(void)
   fdevopen(&my_putc, 0);
   
   radio.begin();
-  radio.setRetries(15,15);
+  radio.setRetries(0,15);
   radio.setAutoAck(false);
   radio.setPayloadSize(RADIO_PAYLOAD);
   radio.openWritingPipe(pipes[0]);
@@ -62,12 +65,36 @@ void loop(void)
       ok = radio.read(radioData, RADIO_PAYLOAD);
     }
     if(ok && checkAddresses(address, radioData)) {
+      byte dest[ADDRESS_LENGTH];
+      for(int i = 0; i < ADDRESS_LENGTH; i++) {
+        dest[i] = radioData[i + ADDRESS_LENGTH];
+      }
+      sendAck(dest);
       for(int i = 0; i < SERIAL_PAYLOAD; i++) {
         Serial.write(radioData[ADDRESS_LENGTH + i]);
       }
       //Serial.println();
     }
   }
+}
+
+void sendAck(byte* dest) {
+  byte data[RADIO_PAYLOAD];
+  addControllerAddressToRequest(data, address);
+  int i;
+  for(i = 0; i < ADDRESS_LENGTH; i++) {
+    data[i + ADDRESS_LENGTH] = dest[i];
+  }
+  i += ADDRESS_LENGTH;
+  for(; i < ACK_SIZE; i++) {
+    data[i] = ack[i];
+  }
+  for(; i < RADIO_PAYLOAD; i++) {
+    data[i] = 0;
+  }
+  radio.stopListening();
+  radio.write(data, RADIO_PAYLOAD);
+  radio.startListening();
 }
 
 boolean checkAddresses(byte* ctrlAddr, byte* destAddr) {

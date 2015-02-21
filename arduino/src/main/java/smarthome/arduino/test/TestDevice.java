@@ -84,8 +84,8 @@ public class TestDevice implements Runnable {
     for (int i = 0; i < Packet.PACKET_UID_LENGTH; i++) {
       packet[i] = uid[i];
     }
-    packet[Packet.PACKET_TYPE_BYTE] = Packet.PACKET_TYPE_DEVICE_ADD;
-    packet[Packet.PACKET_IS_LAST_BYTE] = 0;
+    packet[Packet.PACKET_TYPE_INDEX] = Packet.PACKET_TYPE_DEVICE_ADD;
+    packet[Packet.PACKET_IS_LAST_INDEX] = 0;
     List<Byte> functionsData = new LinkedList<Byte>();
     for (Iterator<byte[]> it = functions.keySet().iterator(); it.hasNext();) {
       byte[] fUid = it.next();
@@ -110,28 +110,28 @@ public class TestDevice implements Runnable {
     int j = 0;
     for (int i = 0; i < functionsData.size(); i++) {
       byte b = functionsData.get(i);
-      packet[Packet.PACKET_DATA_START + j++] = b;
+      packet[Packet.PACKET_DATA_START_INDEX + j++] = b;
       if (j == Packet.PACKET_DATA_LENGTH) {
         j = 0;
         packets.add(packet);
         if (i == functionsData.size() - 1) {
-          packet[Packet.PACKET_IS_LAST_BYTE] = 1;
+          packet[Packet.PACKET_IS_LAST_INDEX] = 1;
         } else {
-          packet[Packet.PACKET_IS_LAST_BYTE] = 0;
+          packet[Packet.PACKET_IS_LAST_INDEX] = 0;
           packet = new byte[Packet.PACKET_LENGTH];
           for (int k = 0; k < Packet.PACKET_UID_LENGTH; k++) {
             packet[k] = uid[k];
           }
-          packet[Packet.PACKET_TYPE_BYTE] = Packet.PACKET_TYPE_SERIAL;
-          packet[Packet.PACKET_IS_LAST_BYTE] = 0;
+          packet[Packet.PACKET_TYPE_INDEX] = Packet.PACKET_TYPE_SERIAL;
+          packet[Packet.PACKET_IS_LAST_INDEX] = 0;
         }
       }
     }
-    if (packet[Packet.PACKET_IS_LAST_BYTE] == 0) {
+    if (packet[Packet.PACKET_IS_LAST_INDEX] == 0) {
       for (int i = j; i < Packet.PACKET_DATA_LENGTH; i++) {
-        packet[Packet.PACKET_DATA_START + i] = 0;
+        packet[Packet.PACKET_DATA_START_INDEX + i] = 0;
       }
-      packet[Packet.PACKET_IS_LAST_BYTE] = 1;
+      packet[Packet.PACKET_IS_LAST_INDEX] = 1;
       packets.add(packet);
     }
     for (byte[] b : packets) {
@@ -155,9 +155,9 @@ public class TestDevice implements Runnable {
       for (int i = 0; i < Packet.PACKET_UID_LENGTH; i++) {
         packet[i] = uid[i];
       }
-      packet[Packet.PACKET_TYPE_BYTE] = Packet.PACKET_TYPE_FUNCTION_VALUE;
-      packet[Packet.PACKET_IS_LAST_BYTE] = 1;
-      int i = Packet.PACKET_DATA_START;
+      packet[Packet.PACKET_TYPE_INDEX] = Packet.PACKET_TYPE_FUNCTION_VALUE;
+      packet[Packet.PACKET_IS_LAST_INDEX] = 1;
+      int i = Packet.PACKET_DATA_START_INDEX;
       packet[i++] = fType;
       packet[i++] = (byte) fUid.length;
       for (int j = 0; j < fUid.length; j++) {
