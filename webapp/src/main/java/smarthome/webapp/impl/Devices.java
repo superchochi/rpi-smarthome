@@ -19,7 +19,7 @@ import smarthome.db.DBManager;
 public class Devices {
 
   @GET
-  @Produces({ MediaType.TEXT_XML })
+  @Produces({ MediaType.APPLICATION_JSON })
   public Device[] getDevices() {
     Controller controller = ServletContextListenerImpl.getController();
     if (controller != null) {
@@ -31,7 +31,7 @@ public class Devices {
   }
 
   @GET
-  @Produces({ MediaType.TEXT_XML })
+  @Produces({ MediaType.APPLICATION_JSON })
   @Path("/{deviceUid}")
   public Device getDevice(@PathParam("deviceUid") String deviceUid) {
     Controller controller = ServletContextListenerImpl.getController();
@@ -47,7 +47,7 @@ public class Devices {
   }
 
   @GET
-  @Produces({ MediaType.TEXT_XML })
+  @Produces({ MediaType.APPLICATION_JSON })
   @Path("/{deviceUid}/{functionUid}")
   public StatisticEntry[] getStats(@PathParam("deviceUid") String deviceUid,
       @PathParam("functionUid") String functionUid) {

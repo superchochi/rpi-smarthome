@@ -2,7 +2,7 @@
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
-#define INTERVAL 60000
+#define INTERVAL 10000
 #define DATA_PAYLOAD 27
 #define RADIO_PAYLOAD 32
 #define ADDRESS_LENGTH 5
@@ -10,9 +10,6 @@
 #define DHT_VCC 3
 #define NRF_VCC 8
 #define NRF_GND 7
-#define ACK_SIZE 10
-
-byte ack[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
 
 dht11 DHT11;
 
@@ -26,7 +23,7 @@ char humiUid[] = { 'h', 'u', 'm', 'i', '1' };
 RF24 radio(9,10);
 
 // Single radio pipe address for the 2 nodes to communicate.
-const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
+const uint64_t pipes[2] = { 0x6465763031LL, 0x3131313131LL };//dev01 -> 0x6465763031LL
 
 void setup()
 {
@@ -43,7 +40,7 @@ void setup()
   
   radio.begin();
   radio.setRetries(0,15);
-  radio.setAutoAck(false);
+  radio.setAutoAck(true);
   radio.setPayloadSize(RADIO_PAYLOAD);
   radio.openWritingPipe(pipes[1]);
   radio.openReadingPipe(1,pipes[0]);
@@ -53,9 +50,7 @@ void setup()
   //Serial.println("sender started");
   delay(2000);
   byte* data = pairDevice();
-  radio.stopListening();
   boolean sent = writeData(data);
-  radio.startListening();
   Serial.print("Device add sent: ");
   Serial.println(sent);
 }
@@ -134,16 +129,12 @@ void loop()
       //Serial.println("OK");
       delay(10);
       byte* data = prepareValue((byte) DHT11.temperature, 1);
-      radio.stopListening();
       boolean sent = writeData(data);
-      radio.startListening();
       Serial.print("Temperature sent: ");
       Serial.println(sent);
       delay(10);
       data = prepareValue((byte) DHT11.humidity, 2);
-      radio.stopListening();
       sent = writeData(data);
-      radio.startListening();
       Serial.print("Humidity sent: ");
       Serial.println(sent);
       break;
@@ -167,46 +158,10 @@ void loop()
 
 boolean writeData(byte* data) {
   radio.stopListening();
-  radio.write(data, RADIO_PAYLOAD);
+  boolean ok = radio.write(data, RADIO_PAYLOAD);
   radio.startListening();
-  boolean ack = waitAck();
   delete[] data;
-  return ack;
-}
-
-boolean waitAck() {
-  long m = millis() + 100;
-  boolean sent = false;
-  while(millis() < m) {
-    if(radio.available()) {
-      byte radioData[RADIO_PAYLOAD];
-      bool ok = false;
-      while(!ok) {
-        ok = radio.read(radioData, RADIO_PAYLOAD);
-      }
-      if(ok && checkAck(ctrlAddr, radioData)) {
-        sent = true;
-        break;
-      }
-    }
-  }
-  return sent;
-}
-
-boolean checkAck(byte* ctrlAddr, byte* data) {
-  int i;
-  for(i = 0; i < ADDRESS_LENGTH; i++) {
-    if(!(ctrlAddr[i] == data[i]) || !(address[i] == data[i + ADDRESS_LENGTH])) {
-      return false;
-    }
-  }
-  i += ADDRESS_LENGTH;
-  for(; i < ACK_SIZE; i++) {
-    if(data[i] != ack[i]) {
-      return false;
-    }
-  }
-  return true;
+  return ok;
 }
 
 int my_putc( char c, FILE *t) {
