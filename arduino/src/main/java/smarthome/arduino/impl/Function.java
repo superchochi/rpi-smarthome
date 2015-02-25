@@ -7,18 +7,13 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
-import smarthome.arduino.utils.Utils;
 import smarthome.db.DBManager;
 
 @Entity
 @NamedQuery(name = "Function.updateValue", query = "UPDATE Function f SET f.value = :value WHERE f.id = :id")
-@XmlRootElement
 public class Function {
 
   public static final byte VALUE_TYPE_INTEGER = -1;
@@ -32,20 +27,14 @@ public class Function {
   private static final String TAG = "Function";
 
   @Id
-  @XmlTransient
   private String id;
 
   @ManyToOne
-  @XmlTransient
   private Device device;
 
-  @XmlElement
   private String uid;
-  @XmlElement
   private byte type;
-  @XmlTransient
-  private byte[] value;
-  @XmlElement
+  private double value;
   private byte valueType;
 
   public String getUid() {
@@ -56,17 +45,15 @@ public class Function {
     return type;
   }
 
-  @XmlElement
-  public Object getValue() {
-    Object val = Utils.getValueFromByteArray(value, valueType);
-    return val;
+  public double getValue() {
+    return value;
   }
 
   public byte getValueType() {
     return valueType;
   }
 
-  public void setValue(Object value) throws DeviceException {
+  public void setValue(double value) throws DeviceException {
     device.setFunctionValue(uid, value);
   }
 
@@ -81,7 +68,7 @@ public class Function {
     }
   }
 
-  protected void setValueInternal(byte[] value, boolean storeInDB) {
+  protected void setValueInternal(double value, boolean storeInDB) {
     this.value = value;
     Logger.info(TAG, id + " > Value updated: " + getValue());
     if (storeInDB) {
@@ -113,7 +100,7 @@ public class Function {
     StringBuffer buff = new StringBuffer();
     buff.append("uid: ").append(uid).append(Constants.LINE_SEPARATOR);
     buff.append("type: ").append(type).append(Constants.LINE_SEPARATOR);
-    buff.append("value: ").append(Utils.getValueFromByteArray(value, valueType));
+    buff.append("value: ").append(value);
     return buff.toString();
   }
 

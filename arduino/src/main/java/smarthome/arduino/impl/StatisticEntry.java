@@ -4,35 +4,42 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 
 import smarthome.arduino.utils.Constants;
-import smarthome.arduino.utils.Utils;
 
 @Entity
-@NamedQuery(name = "Stats.getByFunctionUid", query = "SELECT s FROM StatisticEntry s WHERE s.functionUid = :functionUid")
-@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "Stats.uid", query = "SELECT s FROM StatisticEntry s WHERE s.functionUid = :functionUid"),
+
+    @NamedQuery(name = "Stats.uidTime", query = "SELECT s FROM StatisticEntry s WHERE s.functionUid = :functionUid "
+        + "AND s.timestamp >= :from AND s.timestamp <= :to"),
+
+    @NamedQuery(name = "Stats.uidMax", query = "SELECT MAX(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid"),
+
+    @NamedQuery(name = "Stats.uidMin", query = "SELECT MIN(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid"),
+
+    @NamedQuery(name = "Stats.uidAvg", query = "SELECT AVG(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid"),
+
+    @NamedQuery(name = "Stats.uidTimeMax", query = "SELECT MAX(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid AND s.timestamp >= :from AND s.timestamp <= :to"),
+
+    @NamedQuery(name = "Stats.uidTimeMin", query = "SELECT MIN(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid AND s.timestamp >= :from AND s.timestamp <= :to"),
+
+    @NamedQuery(name = "Stats.uidTimeAvg", query = "SELECT AVG(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid AND s.timestamp >= :from AND s.timestamp <= :to") })
 public class StatisticEntry {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @XmlTransient
   private long id;
-  @XmlElement
   private String functionUid;
-  @XmlTransient
-  private byte[] value;
-  @XmlElement
+  private double value;
   private byte valueType;
-  @XmlElement
   private long timestamp;
 
   public StatisticEntry() {
   }
 
-  public StatisticEntry(String functionUid, byte[] value, byte valueType, long timestamp) {
+  public StatisticEntry(String functionUid, double value, byte valueType, long timestamp) {
     this.functionUid = functionUid;
     this.value = value;
     this.valueType = valueType;
@@ -43,9 +50,12 @@ public class StatisticEntry {
     return functionUid;
   }
 
-  @XmlElement
-  public Object getValue() {
-    return Utils.getValueFromByteArray(value, valueType);
+  public double getValue() {
+    return value;
+  }
+
+  public byte getValueType() {
+    return valueType;
   }
 
   public long getTimestamp() {
@@ -56,7 +66,7 @@ public class StatisticEntry {
   public String toString() {
     StringBuffer buff = new StringBuffer();
     buff.append("functionUid: ").append(functionUid).append(Constants.LINE_SEPARATOR);
-    buff.append("value: ").append(Utils.getValueFromByteArray(value, valueType));
+    buff.append("value: ").append(value);
     return buff.toString();
   }
 }

@@ -69,7 +69,7 @@ public class TestDevice implements Runnable {
     addDevice();
     while (running) {
       try {
-        Thread.sleep(5000);
+        Thread.sleep(500);
       } catch (Exception e) {
         Logger.error(TAG, "Error sleeping!", e);
         break;

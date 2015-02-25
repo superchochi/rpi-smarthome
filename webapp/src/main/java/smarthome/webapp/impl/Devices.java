@@ -8,6 +8,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import smarthome.arduino.impl.Controller;
@@ -20,11 +21,15 @@ public class Devices {
 
   @GET
   @Produces({ MediaType.APPLICATION_JSON })
-  public Device[] getDevices() {
+  public DeviceBean[] getDevices() {
     Controller controller = ServletContextListenerImpl.getController();
     if (controller != null) {
       Device[] devices = controller.getDevices();
-      return devices;
+      DeviceBean[] beans = new DeviceBean[devices.length];
+      for (int i = 0; i < devices.length; i++) {
+        beans[i] = new DeviceBean(devices[i]);
+      }
+      return beans;
     } else {
       return null;
     }
@@ -33,13 +38,13 @@ public class Devices {
   @GET
   @Produces({ MediaType.APPLICATION_JSON })
   @Path("/{deviceUid}")
-  public Device getDevice(@PathParam("deviceUid") String deviceUid) {
+  public DeviceBean getDevice(@PathParam("deviceUid") String deviceUid) {
     Controller controller = ServletContextListenerImpl.getController();
     if (controller != null) {
       Device[] devices = controller.getDevices();
       for (Device d : devices) {
         if (d.getUid().equals(deviceUid)) {
-          return d;
+          return new DeviceBean(d);
         }
       }
     }
@@ -49,12 +54,48 @@ public class Devices {
   @GET
   @Produces({ MediaType.APPLICATION_JSON })
   @Path("/{deviceUid}/{functionUid}")
-  public StatisticEntry[] getStats(@PathParam("deviceUid") String deviceUid,
-      @PathParam("functionUid") String functionUid) {
+  public StatisticBean[] getStats(@PathParam("deviceUid") String deviceUid,
+      @PathParam("functionUid") String functionUid, @QueryParam("from") long from, @QueryParam("to") long to) {
+    String queryName = "Stats.uid";
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("functionUid", deviceUid + "_" + functionUid);
-    List<StatisticEntry> entries = DBManager.getObjects("Stats.getByFunctionUid", StatisticEntry.class, params);
-    return entries.toArray(new StatisticEntry[0]);
+    if (from > 0 || to > 0) {
+      params.put("from", from > 0 ? from : 0);
+      params.put("to", to > 0 && to >= from ? to : Long.MAX_VALUE);
+      queryName += "Time";
+    }
+    List<StatisticEntry> entries = DBManager.getObjects(queryName, StatisticEntry.class, params);
+    StatisticBean[] beans = new StatisticBean[entries.size()];
+    for (int i = 0; i < entries.size(); i++) {
+      beans[i] = new StatisticBean(entries.get(i));
+    }
+    return beans;
+  }
+
+  @GET
+  @Produces({ MediaType.APPLICATION_JSON })
+  @Path("/{deviceUid}/{functionUid}/{criteria}")
+  public double getStatsCriteria(@PathParam("deviceUid") String deviceUid,
+      @PathParam("functionUid") String functionUid, @PathParam("criteria") String criteria,
+      @QueryParam("from") long from, @QueryParam("to") long to) {
+    String queryName = "Stats.uid";
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("functionUid", deviceUid + "_" + functionUid);
+    if (from > 0 || to > 0) {
+      params.put("from", from > 0 ? from : 0);
+      params.put("to", to > 0 && to >= from ? to : Long.MAX_VALUE);
+      queryName += "Time";
+    }
+    double result;
+    if ("max".equalsIgnoreCase(criteria)) {
+      queryName += "Max";
+    } else if ("min".equalsIgnoreCase(criteria)) {
+      queryName += "Min";
+    } else if ("avg".equalsIgnoreCase(criteria)) {
+      queryName += "Avg";
+    }
+    result = DBManager.getValue(queryName, params);
+    return result;
   }
 
 }

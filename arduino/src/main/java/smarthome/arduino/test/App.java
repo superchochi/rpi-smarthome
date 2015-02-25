@@ -27,6 +27,8 @@ public class App {
   private static List<TestDevice> devices = null;
 
   public static void main(String[] args) throws Exception {
+    //System.setProperty(Logger.PROPERTY_LOG_LEVEL, String.valueOf(Logger.DEBUG));
+    Logger.open();
     controller = new Controller();
     controller.init();
     devices = new LinkedList<TestDevice>();

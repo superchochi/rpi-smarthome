@@ -9,55 +9,41 @@ import javax.persistence.Id;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
+import smarthome.arduino.utils.Utils;
 import smarthome.db.DBManager;
 
 @Entity
 @NamedQuery(name = "Devices.getAll", query = "SELECT c FROM Device c")
-@XmlRootElement
 public class Device implements Runnable {
 
   private static final String TAG = "Device";
 
   @Transient
-  @XmlTransient
   private Controller controller;
 
   @Id
-  @XmlElement
   private String uid;
 
   @OneToMany(mappedBy = "device", cascade = CascadeType.ALL, orphanRemoval = true)
-  @XmlElementWrapper(name = "functions")
-  @XmlElement(name = "function")
   private List<Function> functions = new LinkedList<Function>();
 
   @Transient
-  @XmlElement
   private boolean online = false;
-  @XmlElement
   private boolean initialized = false;
 
   @Transient
-  @XmlTransient
   private Thread thr;
 
   @Transient
-  @XmlTransient
   private volatile boolean running;
 
   @Transient
-  @XmlTransient
   private LinkedList<Packet> packets = new LinkedList<Packet>();
 
   @Transient
-  @XmlTransient
   private Object lockPackets = new Object();
 
   protected void startRunning() {
@@ -240,7 +226,7 @@ public class Device implements Runnable {
           f.setType(functionType);
           f.setValueType(functionValueType);
           f.setDevice(this);
-          f.setValueInternal(value, false);
+          f.setValueInternal(Utils.getValueFromByteArray(value, functionValueType), false);
           functions.add(f);
           Logger.debug(TAG, uid + " > New function processed: " + f.getUid());
         }
@@ -294,7 +280,7 @@ public class Device implements Runnable {
         }
         break;
       }
-      function.setValueInternal(value, true);
+      function.setValueInternal(Utils.getValueFromByteArray(value, functionValueType), true);
       if (!online) {
         online = true;
       }

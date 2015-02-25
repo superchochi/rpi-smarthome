@@ -8,6 +8,7 @@ import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.Query;
 import javax.persistence.RollbackException;
 import javax.persistence.TypedQuery;
 
@@ -235,6 +236,33 @@ public class DBManager {
         }
       }
     }
+  }
+
+  public static synchronized double getValue(String namedQuery, Map<String, ?> params) {
+    EntityManager em = null;
+    try {
+      em = getEntityManager();
+      em.getTransaction().begin();
+      Query query = em.createNamedQuery(namedQuery);
+      if (params != null) {
+        for (Iterator<String> it = params.keySet().iterator(); it.hasNext();) {
+          String key = it.next();
+          Object value = params.get(key);
+          query.setParameter(key, value);
+        }
+      }
+      return (Double) query.getSingleResult();
+    } catch (Exception e) {
+      Logger.error(TAG, "Error getting value!", e);
+    } finally {
+      if (em != null && em.isOpen()) {
+        try {
+          em.close();
+        } catch (Exception e) {
+        }
+      }
+    }
+    return 0;
   }
 
   private static boolean isDBFullException(RollbackException e) {
