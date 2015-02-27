@@ -1,0 +1,8 @@
+.my-page .ui-listview {
+	max-width: 46.875em;
+	min-width: 18.75em;
+	margin: 0 auto;
+}
+.my-page .ui-content {
+	padding: .5625em; /* 9px */
+}
