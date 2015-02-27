@@ -13,30 +13,45 @@
 	src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
 
 <script>
-	function f1() {
-		var li = $(document.createElement("li"));
-		var a = $(document.createElement("a")).attr("href", "#");
-		var h2 = $(document.createElement("h2")).text("uid");
-		var pStatus = $(document.createElement("p")).addClass("ui-li-aside")
-				.text("status");
-		a.append(h2);
-		var pFunctions = [];
-		for (var i = 0; i < 2; i++) {
-			pFunctions[i] = $(document.createElement("p"))
-					.text("function " + i);
-			a.append(pFunctions[i]);
-		}
-		a.append(pStatus);
-		li.append(a);
-		li.appendTo($("#devicesList"));
-		$("#devicesList").listview("refresh");
-	}
+  function appendDevice(device) {
+    var li = $(document.createElement("li"));
+    var a = $(document.createElement("a")).attr("href", "functions.html?uid=" + device.uid).attr("target", "_self");
+    var h2 = $(document.createElement("h2")).text(device.uid);
+    var pStatus = $(document.createElement("p")).addClass("ui-li-aside").text(device.online ? "online" : "offline");
+    a.append(h2);
+    var pFunctions = [];
+    for (var i = 0; i < device.functions.length; i++) {
+      var f = device.functions[i];
+      var suff = "";
+      switch (f.type) {
+      case -100:
+        suff = "\xB0C";
+        break;
+      case -101:
+        suff = "%";
+        break;
+      default:
+        suff = "";
+      }
+      pFunctions[i] = $(document.createElement("p")).text(f.uid + ": " + f.value + suff);
+      a.append(pFunctions[i]);
+    }
+    a.append(pStatus);
+    li.append(a);
+    li.appendTo($("#devicesList"));
+    $("#devicesList").listview("refresh");
+  }
 
-	$(function() {
-		for (var i = 0; i < 10; i++) {
-			f1();
-		}
-	});
+  $(function() {
+    $.ajax("rest/devices").done(function(data) {
+      //alert("success: " + data);
+      for (var i = 0; i < data.length; i++) {
+        appendDevice(data[i]);
+      }
+    }).fail(function() {
+      alert("error");
+    });
+  });
 </script>
 </head>
 <body>
