@@ -5,7 +5,7 @@
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
-#define INTERVAL 10
+#define INTERVAL 60
 #define DATA_PAYLOAD 27
 #define RADIO_PAYLOAD 32
 #define ADDRESS_LENGTH 5
@@ -139,8 +139,9 @@ void loop()
     wdt_disable();
     counter = 0;
     flag = false;
-    setWdt(); //re-set the watchdog
     //long time = millis();
+    delay(1000);
+    setWdt(); //re-set the watchdog
     int chk = DHT11.read(DHT_DATA);
     //Serial.print("Read sensor: ");
     switch (chk)

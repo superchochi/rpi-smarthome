@@ -29,23 +29,31 @@
   }
 
   function appendFunction(f) {
+    var uid = getUrlParam("uid");
+    var pre = "";
     var suff = "";
+    var icon = "";
     switch (f.type) {
     case -100:
+      pre = "Temperature";
       suff = "\xB0C";
+      icon = "thermometer.png";
       break;
     case -101:
+      pre = "Humidity"
       suff = "%";
       break;
     default:
       suff = "";
     }
     var li = $(document.createElement("li"));
-    var a = $(document.createElement("a")).attr("href", "#").attr("target", "_self");
-    var img = $(document.createElement("img")).attr("src", "thermometer.png");
+    var a = $(document.createElement("a")).attr("href", "function.html?uid=" + uid + "&function=" + f.uid).attr(
+        "target", "_self");
+    var img = $(document.createElement("img")).attr("src", icon);
     var h2 = $(document.createElement("h2")).text(f.uid);
-    var pStatus = $(document.createElement("p")).addClass("ui-li-aside").text("timestamp");
-    var pFunction = $(document.createElement("p")).text(f.value + suff);
+    var date = new Date(f.timestamp);
+    var pStatus = $(document.createElement("p")).addClass("ui-li-aside").text(date.toLocaleString());
+    var pFunction = $(document.createElement("p")).text(pre + ": " + f.value + suff);
     a.append(img);
     a.append(h2);
     a.append(pFunction);

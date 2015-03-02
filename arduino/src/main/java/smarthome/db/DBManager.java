@@ -238,7 +238,7 @@ public class DBManager {
     }
   }
 
-  public static synchronized double getValue(String namedQuery, Map<String, ?> params) {
+  public static synchronized Double getValue(String namedQuery, Map<String, ?> params) {
     EntityManager em = null;
     try {
       em = getEntityManager();
@@ -251,7 +251,8 @@ public class DBManager {
           query.setParameter(key, value);
         }
       }
-      return (Double) query.getSingleResult();
+      Double res = (Double) query.getSingleResult();
+      return res;
     } catch (Exception e) {
       Logger.error(TAG, "Error getting value!", e);
     } finally {
@@ -262,7 +263,7 @@ public class DBManager {
         }
       }
     }
-    return 0;
+    return null;
   }
 
   private static boolean isDBFullException(RollbackException e) {

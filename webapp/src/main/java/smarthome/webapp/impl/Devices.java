@@ -1,5 +1,6 @@
 package smarthome.webapp.impl;
 
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +76,7 @@ public class Devices {
   @GET
   @Produces({ MediaType.APPLICATION_JSON })
   @Path("/{deviceUid}/{functionUid}/{criteria}")
-  public double getStatsCriteria(@PathParam("deviceUid") String deviceUid,
+  public Double getStatsCriteria(@PathParam("deviceUid") String deviceUid,
       @PathParam("functionUid") String functionUid, @PathParam("criteria") String criteria,
       @QueryParam("from") long from, @QueryParam("to") long to) {
     String queryName = "Stats.uid";
@@ -86,7 +87,7 @@ public class Devices {
       params.put("to", to > 0 && to >= from ? to : Long.MAX_VALUE);
       queryName += "Time";
     }
-    double result;
+    Double result;
     if ("max".equalsIgnoreCase(criteria)) {
       queryName += "Max";
     } else if ("min".equalsIgnoreCase(criteria)) {
@@ -95,6 +96,48 @@ public class Devices {
       queryName += "Avg";
     }
     result = DBManager.getValue(queryName, params);
+    return result;
+  }
+
+  @GET
+  @Produces({ MediaType.APPLICATION_JSON })
+  @Path("/{deviceUid}/{functionUid}/{interval}/{timestamp}")
+  public Map<Long, Double> getStatsDay(@PathParam("deviceUid") String deviceUid,
+      @PathParam("functionUid") String functionUid, @PathParam("timestamp") long timestamp,
+      @PathParam("interval") String interval) {
+    String queryName = "Stats.uidTimeAvg";
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("functionUid", deviceUid + "_" + functionUid);
+    long step;
+    Map<Long, Double> result = new HashMap<Long, Double>();
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeInMillis(timestamp);
+    long finalTime;
+    if (interval.equalsIgnoreCase("day")) {
+      step = 60 * 60 * 1000;
+      cal.add(Calendar.DAY_OF_MONTH, 1);
+      finalTime = cal.getTimeInMillis();
+    } else if (interval.equalsIgnoreCase("week")) {
+      step = 24 * 60 * 60 * 1000;
+      cal.add(Calendar.DAY_OF_MONTH, 7);
+      finalTime = cal.getTimeInMillis();
+    } else if (interval.equalsIgnoreCase("month")) {
+      step = 24 * 60 * 60 * 1000;
+      cal.add(Calendar.MONTH, 1);
+      finalTime = cal.getTimeInMillis();
+    } else {
+      return result;
+    }
+    long from = timestamp;
+    long to;
+    while (from <= finalTime) {
+      to = from + step;
+      params.put("from", from);
+      params.put("to", to);
+      Double value = DBManager.getValue(queryName, params);
+      result.put(from, value);
+      from += step;
+    }
     return result;
   }
 

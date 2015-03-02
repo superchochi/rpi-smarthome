@@ -36,6 +36,7 @@ public class Function {
   private byte type;
   private double value;
   private byte valueType;
+  private long timestamp;
 
   public String getUid() {
     return uid;
@@ -51,6 +52,10 @@ public class Function {
 
   public byte getValueType() {
     return valueType;
+  }
+
+  public long getTimestamp() {
+    return timestamp;
   }
 
   public void setValue(double value) throws DeviceException {
@@ -69,6 +74,7 @@ public class Function {
   }
 
   protected void setValueInternal(double value, boolean storeInDB) {
+    timestamp = System.currentTimeMillis();
     this.value = value;
     Logger.info(TAG, id + " > Value updated: " + getValue());
     if (storeInDB) {
@@ -76,7 +82,7 @@ public class Function {
       params.put("value", value);
       params.put("id", id);
       DBManager.updateObject("Function.updateValue", this.getClass(), params);
-      DBManager.persistObject(new StatisticEntry(id, value, valueType, System.currentTimeMillis()));
+      DBManager.persistObject(new StatisticEntry(id, value, valueType, timestamp));
     }
   }
 

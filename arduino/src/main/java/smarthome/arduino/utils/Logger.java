@@ -1,7 +1,9 @@
 package smarthome.arduino.utils;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Calendar;
@@ -10,6 +12,7 @@ public class Logger {
 
   public static final String PROPERTY_LOG_LEVEL = "smarthome.logger.level";
   public static final String PROPERTY_LOG_FILENAME = "smarthome.arduino.log";
+  public static final String PROPERTY_LOG_SIZE = "smarthome.arduino.log.size";
 
   public static final String LEVEL_DEBUG = "DEBUG";
   public static final String LEVEL_INFO = "INFO";
@@ -26,8 +29,10 @@ public class Logger {
   private static final Object sync = new Object();
   private static File logFile = null;
   private static BufferedOutputStream out = null;
+  private static long maxSize;
 
   public static void open() {
+    maxSize = Long.getLong(PROPERTY_LOG_SIZE, 1048576);
     String logFilename = System.getProperty(PROPERTY_LOG_FILENAME, "controller.log");
     logFile = new File(logFilename);
     if (logFile.exists() && !logFile.isFile()) {
@@ -100,6 +105,9 @@ public class Logger {
 
   private static void log(String level, String tag, String msg, Throwable t, int l) {
     if (l <= Logger.level) {
+      if (logFile.length() >= maxSize) {
+        startNewLog();
+      }
       StringBuffer buff = new StringBuffer();
       buff.append(Calendar.getInstance().getTime()).append(" ").append(level).append(" [").append(tag).append("]: ")
           .append(msg).append(Constants.LINE_SEPARATOR);
@@ -117,6 +125,43 @@ public class Logger {
         }
       }
     }
+  }
+
+  private static void startNewLog() {
+    File file = logFile;
+    close();
+    File old = new File(file.getName() + "_old");
+    if (!old.exists() || (old.exists() && old.isFile())) {
+      BufferedInputStream in = null;
+      try {
+        in = new BufferedInputStream(new FileInputStream(file));
+        out = new BufferedOutputStream(new FileOutputStream(old));
+        byte[] buff = new byte[2048];
+        int len;
+        while ((len = in.read(buff, 0, 2048)) != -1) {
+          out.write(buff, 0, len);
+        }
+        out.flush();
+      } catch (Exception e) {
+        System.out.println("Error backup old log!");
+        e.printStackTrace();
+      } finally {
+        if (in != null) {
+          try {
+            in.close();
+          } catch (Exception e) {
+          }
+        }
+        if (out != null) {
+          try {
+            out.close();
+          } catch (Exception e) {
+          }
+        }
+      }
+    }
+    file.delete();
+    open();
   }
 
   public static void main(String[] args) {

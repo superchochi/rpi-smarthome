@@ -8,6 +8,7 @@ public class FunctionBean {
   private byte type;
   private Object value;
   private byte valueType;
+  private long timestamp;
 
   public FunctionBean() {
   }
@@ -17,6 +18,7 @@ public class FunctionBean {
     type = function.getType();
     value = function.getValue();
     valueType = function.getValueType();
+    timestamp = function.getTimestamp();
   }
 
   public String getUid() {
@@ -49,6 +51,14 @@ public class FunctionBean {
 
   public void setValueType(byte valueType) {
     this.valueType = valueType;
+  }
+
+  public long getTimestamp() {
+    return timestamp;
+  }
+
+  public void setTimestamp(long timestamp) {
+    this.timestamp = timestamp;
   }
 
 }

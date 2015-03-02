@@ -1,0 +1,6 @@
+.my-page .ui-content {
+	padding: .5625em; /* 9px */
+	max-width: 46.875em;
+	min-width: 18.75em;
+	margin: 0 auto;
+}
