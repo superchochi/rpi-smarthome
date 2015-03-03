@@ -39,6 +39,7 @@
 	</dependencies>
 	<packaging>war</packaging>
 	<build>
+		<finalName>rpismart</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
