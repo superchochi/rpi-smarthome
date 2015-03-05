@@ -1,11 +1,14 @@
 package smarthome.arduino.impl;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
@@ -16,7 +19,8 @@ import smarthome.arduino.utils.Utils;
 import smarthome.db.DBManager;
 
 @Entity
-@NamedQuery(name = "Devices.getAll", query = "SELECT c FROM Device c")
+@NamedQueries({ @NamedQuery(name = "Devices.getAll", query = "SELECT c FROM Device c"),
+    @NamedQuery(name = "Devices.updateName", query = "UPDATE Device d SET d.name = :name WHERE d.uid = :uid") })
 public class Device implements Runnable {
 
   private static final String TAG = "Device";
@@ -33,6 +37,7 @@ public class Device implements Runnable {
   @Transient
   private boolean online = false;
   private boolean initialized = false;
+  private String name = null;
 
   @Transient
   private Thread thr;
@@ -105,6 +110,19 @@ public class Device implements Runnable {
   public void refresh() throws DeviceException {
     // TODO Auto-generated method stub
 
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("name", name);
+    params.put("uid", uid);
+    DBManager.updateObject("Devices.updateName", this.getClass(), params);
+    Logger.info(TAG, uid + " > Device name set: " + name);
   }
 
   protected void setUid(String uid) {

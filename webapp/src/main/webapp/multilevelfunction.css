@@ -4,3 +4,6 @@
 	min-width: 18.75em;
 	margin: 0 auto;
 }
+.controlgroup-textinput {
+	padding: .22em 0;
+}

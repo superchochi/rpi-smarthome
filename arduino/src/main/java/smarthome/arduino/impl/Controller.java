@@ -89,6 +89,12 @@ public class Controller implements SerialDataListener, Runnable {
     }
   }
 
+  public Device getDevice(String uid) {
+    synchronized (devices) {
+      return devices.get(uid);
+    }
+  }
+
   public void removeDevice(String deviceUid) {
     // TODO Auto-generated method stub
 

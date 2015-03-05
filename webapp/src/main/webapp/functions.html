@@ -6,16 +6,20 @@
 <title>Functions</title>
 <!--link rel="shortcut icon" href="../favicon.ico"-->
 <link rel="stylesheet"
-	href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+	href="jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.css" />
 <link rel="stylesheet" href="functions.css">
-<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
-<script
-	src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+<script src="jquery-1.11.2.min.js"></script>
+<script src="jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.js"></script>
 
 <script>
+  var uid;
   function getUrlParam(param) {
     if (window.document.URL.indexOf("?") > 0) {
-      var params = window.document.URL.substring(window.document.URL.indexOf("?") + 1).split("&");
+      var end = window.document.URL.indexOf("#");
+      if (end === -1) {
+        end = window.document.URL.length;
+      }
+      var params = window.document.URL.substring(window.document.URL.indexOf("?") + 1, end).split("&");
       for (var i = 0; i < params.length; i++) {
         if (params[i].indexOf("=") > 0) {
           var spl = params[i].split("=");
@@ -29,26 +33,29 @@
   }
 
   function appendFunction(f) {
-    var uid = getUrlParam("uid");
     var pre = "";
     var suff = "";
     var icon = "";
+    var page = "";
     switch (f.type) {
     case -100:
       pre = "Temperature";
       suff = "\xB0C";
-      icon = "thermometer.png";
+      icon = "temperature-icon.png";
+      page = "multilevelfunction.html";
       break;
     case -101:
       pre = "Humidity"
       suff = "%";
+      icon = "humidity-icon.png";
+      page = "multilevelfunction.html";
       break;
     default:
       suff = "";
     }
     var li = $(document.createElement("li"));
-    var a = $(document.createElement("a")).attr("href", "function.html?uid=" + uid + "&function=" + f.uid).attr(
-        "target", "_self");
+    var a = $(document.createElement("a")).attr("href", page + "?uid=" + uid + "&function=" + f.uid).attr("target",
+        "_self");
     var img = $(document.createElement("img")).attr("src", icon);
     var h2 = $(document.createElement("h2")).text(f.uid);
     var date = new Date(f.timestamp);
@@ -63,19 +70,35 @@
     $("#functionsList").listview("refresh");
   }
 
-  $(function() {
-    var uid = getUrlParam("uid");
-    if (uid !== "") {
-      $.ajax("rest/devices/" + uid).done(function(data) {
-        //alert("success: " + data);
-        for (var i = 0; i < data.functions.length; i++) {
-          appendFunction(data.functions[i]);
-        }
-      }).fail(function() {
-        alert("error");
+  function popupDialog() {
+    $("#newName").val($("#deviceUid").text());
+    $('#myPopup').popup('open');
+  }
+
+  function closeDialog(action) {
+    $('#myPopup').popup('close');
+    if (action === "rename") {
+      var name = $("#newName").val();
+      $.ajax({
+        type : "PUT",
+        url : "rest/devices/" + uid + "/setName/" + name
+      }).done(function(result) {
+        $("#deviceUid").text(name);
       });
-      $("#deviceUid").text(uid);
     }
+  }
+
+  $(function() {
+    uid = getUrlParam("uid");
+    $.ajax("rest/devices/" + uid).done(function(data) {
+      //alert("success: " + data);
+      for (var i = 0; i < data.functions.length; i++) {
+        appendFunction(data.functions[i]);
+      }
+      $("#deviceUid").text(data.name ? data.name : uid);
+    }).fail(function() {
+      alert("error");
+    });
   });
 </script>
 </head>
@@ -83,7 +106,7 @@
 	<div data-role="page" data-theme="b" id="demo-page" class="my-page">
 
 		<div data-role="header">
-			<h1 id="deviceUid">Device uid</h1>
+			<h1 onclick="popupDialog()" id="deviceUid"></h1>
 			<a href="./" data-shadow="false" data-iconshadow="false"
 				data-icon="carat-l" data-rel="back" data-ajax="false">Back</a>
 		</div>
@@ -106,6 +129,19 @@
                 <p class="ui-li-aside">BlackBerry</p>
             </a></li-->
 			</ul>
+
+			<div data-role="popup" id="myPopup" style="min-width: 18.75em;"
+				data-transition="pop">
+				<div data-role="header">
+					<h1 style="margin: 0;">Rename device...</h1>
+				</div>
+				<div role="main" class="ui-content">
+					<h3 class="ui-title">Rename device</h3>
+					<input type="text" id="newName">
+					<button data-inline="true" onclick="closeDialog('cancel')">Cancel</button>
+					<button data-inline="true" onclick="closeDialog('rename')">Rename</button>
+				</div>
+			</div>
 
 		</div>
 		<!-- /content -->

@@ -10,6 +10,7 @@ import smarthome.arduino.impl.Function;
 public class DeviceBean {
 
   private String uid;
+  private String name;
   private boolean online;
   private boolean initialized;
   private List<FunctionBean> functions;
@@ -19,6 +20,7 @@ public class DeviceBean {
 
   public DeviceBean(Device device) {
     uid = device.getUid();
+    name = device.getName();
     try {
       online = device.isOnline();
     } catch (DeviceException e) {
@@ -38,6 +40,14 @@ public class DeviceBean {
 
   public void setUid(String uid) {
     this.uid = uid;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 
   public boolean isOnline() {
