@@ -13,7 +13,7 @@ import smarthome.arduino.utils.Logger;
 import smarthome.db.DBManager;
 
 @Entity
-@NamedQuery(name = "Function.updateValue", query = "UPDATE Function f SET f.value = :value WHERE f.id = :id")
+@NamedQuery(name = "Function.updateValue", query = "UPDATE Function f SET f.value = :value, f.timestamp = :timestamp WHERE f.id = :id")
 public class Function {
 
   public static final byte VALUE_TYPE_INTEGER = -1;
@@ -80,6 +80,7 @@ public class Function {
     if (storeInDB) {
       Map<String, Object> params = new HashMap<String, Object>();
       params.put("value", value);
+      params.put("timestamp", timestamp);
       params.put("id", id);
       DBManager.updateObject("Function.updateValue", this.getClass(), params);
       DBManager.persistObject(new StatisticEntry(id, value, valueType, timestamp));

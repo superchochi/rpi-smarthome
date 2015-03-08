@@ -1,11 +1,19 @@
-#include <avr/wdt.h>
-#include <avr/sleep.h>
-#include <avr/power.h>
+/*
+nrf pins: 1:empty
+          2:12
+          3:11 ---> power leak, set to input when sleep and back to output when awake
+          4:13
+          5:10
+          6:9
+          7:8
+          8:7
+*/
+#include <LowPower.h>
 #include <dht11.h>
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
-#define INTERVAL 60
+#define INTERVAL 15//*4s = 60s
 #define DATA_PAYLOAD 27
 #define RADIO_PAYLOAD 32
 #define ADDRESS_LENGTH 5
@@ -28,15 +36,8 @@ RF24 radio(9,10);
 // Single radio pipe address for the 2 nodes to communicate.
 const uint64_t pipes[2] = { 0x6465763031LL, 0x3131313131LL };//dev01 -> 0x6465763031LL
 
-volatile byte counter = 0;
-volatile boolean flag = true;
-
 void setup()
 {
-  MCUSR = 0; //reset the status register of the MCU
-  wdt_disable(); //disable the watchdog
-  setWdt(); //set up the watchdog
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN); //sleep mode - POWER DOWN
   //power
   pinMode(NRF_GND, OUTPUT);
   digitalWrite(NRF_GND, LOW);
@@ -47,7 +48,7 @@ void setup()
   Serial.begin(115200);
   fdevopen(&my_putc, 0);
   
-  setNrf();
+  startNrf();
   
   //Serial.println("sender started");
   //delay(2000);
@@ -120,7 +121,8 @@ byte* prepareValue(byte value, byte sensor) {
   return data;
 }
 
-void setNrf() {
+void startNrf() {
+  pinMode(11, OUTPUT);//power leak see top of document
   digitalWrite(NRF_VCC, HIGH);
   radio.begin();
   radio.setRetries(0,15);
@@ -133,56 +135,52 @@ void setNrf() {
 
 void loop()
 {
-  if(flag) {
-    power_all_enable();
-    digitalWrite(DHT_VCC, HIGH);
-    wdt_disable();
-    counter = 0;
-    flag = false;
-    //long time = millis();
-    delay(1000);
-    setWdt(); //re-set the watchdog
-    int chk = DHT11.read(DHT_DATA);
-    //Serial.print("Read sensor: ");
-    switch (chk)
-    {
-      case DHTLIB_OK: {
-        //Serial.println("OK");
-        //delay(10);
-        setNrf();
-        byte* data = prepareValue((byte) DHT11.temperature, 1);
-        boolean sent = writeData(data);
-        Serial.print("Temperature sent: ");
-        Serial.println(sent);
-        //delay(10);
-        data = prepareValue((byte) DHT11.humidity, 2);
-        sent = writeData(data);
-        Serial.print("Humidity sent: ");
-        Serial.println(sent);
-        delay(10);
-        break;
-      }
-      case DHTLIB_ERROR_CHECKSUM: {
-        //Serial.println("Checksum error");
-        break;
-      }
-      case DHTLIB_ERROR_TIMEOUT: {
-        //Serial.println("Time out error");
-        break;
-      }
-      default: {
-        //Serial.println("Unknown error");
-        break;
-      }
+  //long time = millis();
+  digitalWrite(DHT_VCC, HIGH);
+  delay(100);
+  int chk = DHT11.read(DHT_DATA);
+  //Serial.print("Read sensor: ");
+  switch (chk)
+  {
+    case DHTLIB_OK: {
+      //Serial.println("OK");
+      startNrf();
+      byte* data = prepareValue((byte) DHT11.temperature, 1);
+      volatile boolean sent = writeData(data);
+      Serial.print("Temperature sent: ");
+      Serial.println(sent);
+      //delay(10);
+      data = prepareValue((byte) DHT11.humidity, 2);
+      sent = writeData(data);
+      Serial.print("Humidity sent: ");
+      Serial.println(sent);
+      delay(10);
+      break;
     }
-    //delay(INTERVAL - (millis() - time));
-  } else {
-    if(counter == 0) {
-      power_all_disable();
-      digitalWrite(NRF_VCC, LOW);
-      digitalWrite(DHT_VCC, LOW);
+    case DHTLIB_ERROR_CHECKSUM: {
+      //Serial.println("Checksum error");
+      break;
     }
-    sleep_mode(); //CPU in sleep-this corresponds to sleep_enable+sleep_cpu+sleep_disable
+    case DHTLIB_ERROR_TIMEOUT: {
+      //Serial.println("Time out error");
+      break;
+    }
+    default: {
+      //Serial.println("Unknown error");
+      break;
+    }
+  }
+  //delay(INTERVAL - (millis() - time));
+  digitalWrite(NRF_VCC, LOW);
+  digitalWrite(13, LOW);
+  digitalWrite(12, LOW);
+  pinMode(11, INPUT);
+  digitalWrite(10, LOW);
+  digitalWrite(9, LOW);
+  digitalWrite(DHT_VCC, LOW);
+  digitalWrite(DHT_DATA, LOW);
+  for(int i = 0; i < INTERVAL; i++) {
+    LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
   }
 }
 
@@ -192,21 +190,6 @@ boolean writeData(byte* data) {
   radio.startListening();
   delete[] data;
   return ok;
-}
-
-void setWdt() {
-   SREG &= ~(1<<SREG_I); //disable global interrupts
-   //prepare the watchdog's register
-   WDTCSR |= ((1<<WDCE) | (1<<WDE));
-   //set the "Interrupt Mode" with a timeout of 1 sec
-   WDTCSR = ((1<<WDIE)| (1<<WDP2) | (1<<WDP1)); 
-   SREG |= (1<<SREG_I); //re-enable global interrupts
-}
-
-ISR(WDT_vect) {
-   if (++counter >= INTERVAL) { //set here the # of seconds for the timeout
-      flag = true;
-   }
 }
 
 int my_putc( char c, FILE *t) {
