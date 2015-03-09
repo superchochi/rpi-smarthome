@@ -271,7 +271,8 @@ public class DBManager {
       DatabaseException dbe = (DatabaseException) e.getCause();
       if (dbe.getErrorCode() == DatabaseException.SQL_EXCEPTION) {
         SQLException sqle = (SQLException) dbe.getCause();
-        if (sqle.getErrorCode() == 13) {
+        int code = sqle.getErrorCode();
+        if (code == 13 || code == 0) {
           return true;
         }
       }
@@ -280,7 +281,7 @@ public class DBManager {
   }
 
   private static void freeSpace() {
-    int num = Integer.getInteger(PROPERTY_DELETE_OLDEST_COUNT, 100).intValue();
+    int num = Integer.getInteger(PROPERTY_DELETE_OLDEST_COUNT, 1000).intValue();
     Logger.info(TAG, "DB is full! Delete oldest " + num + " entries...", null);
     EntityManager em = getEntityManager();
     em.getTransaction().begin();

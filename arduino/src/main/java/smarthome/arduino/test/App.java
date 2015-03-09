@@ -27,7 +27,7 @@ public class App {
   private static List<TestDevice> devices = null;
 
   public static void main(String[] args) throws Exception {
-    //System.setProperty(Logger.PROPERTY_LOG_LEVEL, String.valueOf(Logger.DEBUG));
+    System.setProperty(Logger.PROPERTY_LOG_LEVEL, String.valueOf(Logger.DEBUG));
     Logger.open();
     controller = new Controller();
     controller.init();
@@ -36,10 +36,11 @@ public class App {
     functions.put("func1", Function.FUNCTION_TYPE_TEMPERATURE);
     functions.put("func2", Function.FUNCTION_TYPE_HUMIDITY);
     addDevice("dev01", functions);
-    Thread.sleep(10000);
+    Thread.sleep(5000);
     for (TestDevice d : devices) {
-      //d.stopRunning(false);
+      d.stopRunning(false);
     }
+    controller.close();
   }
 
   private static void doInput() {

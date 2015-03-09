@@ -75,6 +75,7 @@ public class TestDevice implements Runnable {
         break;
       }
       updateFunctionsValue();
+      break;
     }
   }
 
