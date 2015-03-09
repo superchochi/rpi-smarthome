@@ -49,6 +49,7 @@ void setup()
   fdevopen(&my_putc, 0);
   
   startNrf();
+  delay(100);
   
   //Serial.println("sender started");
   //delay(2000);
@@ -125,7 +126,7 @@ void startNrf() {
   pinMode(11, OUTPUT);//power leak see top of document
   digitalWrite(NRF_VCC, HIGH);
   radio.begin();
-  radio.setRetries(0,15);
+  radio.setRetries(15,15);
   radio.setAutoAck(true);
   radio.setPayloadSize(RADIO_PAYLOAD);
   radio.openWritingPipe(pipes[1]);
@@ -137,7 +138,7 @@ void loop()
 {
   //long time = millis();
   digitalWrite(DHT_VCC, HIGH);
-  delay(100);
+  delay(1000);
   int chk = DHT11.read(DHT_DATA);
   //Serial.print("Read sensor: ");
   switch (chk)
@@ -145,16 +146,17 @@ void loop()
     case DHTLIB_OK: {
       //Serial.println("OK");
       startNrf();
+      delay(100);
       byte* data = prepareValue((byte) DHT11.temperature, 1);
       volatile boolean sent = writeData(data);
       Serial.print("Temperature sent: ");
       Serial.println(sent);
-      //delay(10);
+      delay(100);
       data = prepareValue((byte) DHT11.humidity, 2);
       sent = writeData(data);
       Serial.print("Humidity sent: ");
       Serial.println(sent);
-      delay(10);
+      delay(100);
       break;
     }
     case DHTLIB_ERROR_CHECKSUM: {
