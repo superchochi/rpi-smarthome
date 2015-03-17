@@ -9,11 +9,11 @@ nrf pins: 1:empty
           8:7
 */
 #include <LowPower.h>
-#include <dht11.h>
+#include <dht.h>
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
-#define INTERVAL 15//*4s = 60s
+#define INTERVAL 1//*4s = 60s
 #define DATA_PAYLOAD 27
 #define RADIO_PAYLOAD 32
 #define ADDRESS_LENGTH 5
@@ -22,7 +22,7 @@ nrf pins: 1:empty
 #define NRF_VCC 8
 #define NRF_GND 7
 
-dht11 DHT11;
+dht DHT11;
 
 byte address[] = { 'd', 'e', 'v', '0', '1' };
 byte ctrlAddr[] = { '1', '1', '1', '1', '1' };
@@ -31,7 +31,7 @@ char tempUid[] = { 't', 'e', 'm', 'p', '1' };
 char humiUid[] = { 'h', 'u', 'm', 'i', '1' };
 
 // Set up nRF24L01 radio on SPI bus plus pins 9 & 10
-RF24 radio(9,10);
+RF24 radio(9, 10);
 
 // Single radio pipe address for the 2 nodes to communicate.
 const uint64_t pipes[2] = { 0x6465763031LL, 0x3131313131LL };//dev01 -> 0x6465763031LL
@@ -44,13 +44,13 @@ void setup()
   pinMode(NRF_VCC, OUTPUT);
   pinMode(DHT_VCC, OUTPUT);
   digitalWrite(DHT_VCC, HIGH);
-  
-  Serial.begin(115200);
+
+  Serial.begin(9600);
   fdevopen(&my_putc, 0);
-  
+
   startNrf();
   delay(100);
-  
+
   //Serial.println("sender started");
   //delay(2000);
   byte* data = pairDevice();
@@ -62,7 +62,7 @@ void setup()
 byte* pairDevice() {
   byte* data = new byte[RADIO_PAYLOAD];
   int i;
-  for(i = 0; i < ADDRESS_LENGTH; i++) {
+  for (i = 0; i < ADDRESS_LENGTH; i++) {
     data[i] = ctrlAddr[i];
     data[i + ADDRESS_LENGTH] = address[i];
   }
@@ -73,17 +73,17 @@ byte* pairDevice() {
   data[i++] = -100;//function type temperature
   data[i++] = ADDRESS_LENGTH;//uid length
   int k = i + ADDRESS_LENGTH;//add uid
-  for(int j = 0; i < k; i++, j++) {
+  for (int j = 0; i < k; i++, j++) {
     data[i] = tempUid[j];
   }
   data[i++] = -3;//value type - Byte
   data[i++] = 0;//function value
-  
+
   data[i++] = -100;//function data
   data[i++] = -101;//function type humidity
   data[i++] = ADDRESS_LENGTH;//uid length
   k = i + ADDRESS_LENGTH;//add uid
-  for(int j = 0; i < k; i++, j++) {
+  for (int j = 0; i < k; i++, j++) {
     data[i] = humiUid[j];
   }
   data[i++] = -3;//value type - Byte
@@ -94,7 +94,7 @@ byte* pairDevice() {
 byte* prepareValue(byte value, byte sensor) {
   byte* data = new byte[RADIO_PAYLOAD];
   int i;
-  for(i = 0; i < 5; i++) {
+  for (i = 0; i < 5; i++) {
     data[i] = ctrlAddr[i];
     data[i + ADDRESS_LENGTH] = address[i];
   }
@@ -104,16 +104,16 @@ byte* prepareValue(byte value, byte sensor) {
   data[i++] = sensor == 1 ? -100 : -101;
   data[i++] = 5;
   int k = i + 5;
-  for(int j = 0; i < k; i++, j++) {
-    if(sensor == 1) {
+  for (int j = 0; i < k; i++, j++) {
+    if (sensor == 1) {
       data[i] = tempUid[j];
-    } else if(sensor == 2) {
+    } else if (sensor == 2) {
       data[i] = humiUid[j];
     }
   }
   data[i++] = -3;
   data[i++] = value;
-  for(; i < RADIO_PAYLOAD; i++) {
+  for (; i < RADIO_PAYLOAD; i++) {
     data[i] = 0;
   }
   /*for(int j = 0; j < RADIO_PAYLOAD; j++) {
@@ -126,11 +126,11 @@ void startNrf() {
   pinMode(11, OUTPUT);//power leak see top of document
   digitalWrite(NRF_VCC, HIGH);
   radio.begin();
-  radio.setRetries(15,15);
+  radio.setRetries(15, 15);
   radio.setAutoAck(true);
   radio.setPayloadSize(RADIO_PAYLOAD);
   radio.openWritingPipe(pipes[1]);
-  radio.openReadingPipe(1,pipes[0]);
+  radio.openReadingPipe(1, pipes[0]);
   radio.startListening();
 }
 
@@ -140,38 +140,41 @@ void loop()
   digitalWrite(DHT_VCC, HIGH);
   delay(1000);
   int chk = DHT11.read(DHT_DATA);
-  //Serial.print("Read sensor: ");
+  Serial.print("Read sensor: ");
   switch (chk)
   {
     case DHTLIB_OK: {
-      //Serial.println("OK");
-      startNrf();
-      delay(100);
-      byte* data = prepareValue((byte) DHT11.temperature, 1);
-      volatile boolean sent = writeData(data);
-      Serial.print("Temperature sent: ");
-      Serial.println(sent);
-      delay(100);
-      data = prepareValue((byte) DHT11.humidity, 2);
-      sent = writeData(data);
-      Serial.print("Humidity sent: ");
-      Serial.println(sent);
-      delay(100);
-      break;
-    }
+        Serial.print("Temperature: ");
+        Serial.println(DHT11.temperature);
+        Serial.print("Humidity: ");
+        Serial.println(DHT11.humidity);
+        startNrf();
+        //delay(100);
+        byte* data = prepareValue((byte) DHT11.temperature, 1);
+        volatile boolean sent = writeData(data);
+        Serial.print("Temperature sent: ");
+        Serial.println(sent);
+        //delay(100);
+        data = prepareValue((byte) DHT11.humidity, 2);
+        sent = writeData(data);
+        Serial.print("Humidity sent: ");
+        Serial.println(sent);
+        break;
+      }
     case DHTLIB_ERROR_CHECKSUM: {
-      //Serial.println("Checksum error");
-      break;
-    }
+        Serial.println("Checksum error");
+        break;
+      }
     case DHTLIB_ERROR_TIMEOUT: {
-      //Serial.println("Time out error");
-      break;
-    }
+        Serial.println("Time out error");
+        break;
+      }
     default: {
-      //Serial.println("Unknown error");
-      break;
-    }
+        Serial.println("Unknown error");
+        break;
+      }
   }
+  delay(100);
   //delay(INTERVAL - (millis() - time));
   digitalWrite(NRF_VCC, LOW);
   digitalWrite(13, LOW);
@@ -181,7 +184,7 @@ void loop()
   digitalWrite(9, LOW);
   digitalWrite(DHT_VCC, LOW);
   digitalWrite(DHT_DATA, LOW);
-  for(int i = 0; i < INTERVAL; i++) {
+  for (int i = 0; i < INTERVAL; i++) {
     LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
   }
 }
@@ -197,3 +200,4 @@ boolean writeData(byte* data) {
 int my_putc( char c, FILE *t) {
   Serial.write( c );
 }
+
