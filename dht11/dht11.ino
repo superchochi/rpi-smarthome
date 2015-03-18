@@ -9,11 +9,11 @@ nrf pins: 1:empty
           8:7
 */
 #include <LowPower.h>
-#include <dht.h>
 #include <SPI.h>
+#include <DHT.h>
 #include "nRF24L01.h"
 #include "RF24.h"
-#define INTERVAL 1//*4s = 60s
+#define INTERVAL 15//*4s = 60s
 #define DATA_PAYLOAD 27
 #define RADIO_PAYLOAD 32
 #define ADDRESS_LENGTH 5
@@ -22,7 +22,9 @@ nrf pins: 1:empty
 #define NRF_VCC 8
 #define NRF_GND 7
 
-dht DHT11;
+#define DHTTYPE DHT11   // DHT 11
+
+DHT dht(DHT_DATA, DHTTYPE, 3); //threshold 3 works for 8mhz
 
 byte address[] = { 'd', 'e', 'v', '0', '1' };
 byte ctrlAddr[] = { '1', '1', '1', '1', '1' };
@@ -49,7 +51,7 @@ void setup()
   fdevopen(&my_putc, 0);
 
   startNrf();
-  delay(100);
+  //delay(100);
 
   //Serial.println("sender started");
   //delay(2000);
@@ -126,66 +128,58 @@ void startNrf() {
   pinMode(11, OUTPUT);//power leak see top of document
   digitalWrite(NRF_VCC, HIGH);
   radio.begin();
-  radio.setRetries(15, 15);
+  radio.setRetries(0, 15);
   radio.setAutoAck(true);
   radio.setPayloadSize(RADIO_PAYLOAD);
   radio.openWritingPipe(pipes[1]);
   radio.openReadingPipe(1, pipes[0]);
   radio.startListening();
+  //radio.printDetails();
 }
 
 void loop()
 {
   //long time = millis();
   digitalWrite(DHT_VCC, HIGH);
-  delay(1000);
-  int chk = DHT11.read(DHT_DATA);
-  Serial.print("Read sensor: ");
-  switch (chk)
-  {
-    case DHTLIB_OK: {
-        Serial.print("Temperature: ");
-        Serial.println(DHT11.temperature);
-        Serial.print("Humidity: ");
-        Serial.println(DHT11.humidity);
-        startNrf();
-        //delay(100);
-        byte* data = prepareValue((byte) DHT11.temperature, 1);
-        volatile boolean sent = writeData(data);
-        Serial.print("Temperature sent: ");
-        Serial.println(sent);
-        //delay(100);
-        data = prepareValue((byte) DHT11.humidity, 2);
-        sent = writeData(data);
-        Serial.print("Humidity sent: ");
-        Serial.println(sent);
-        break;
-      }
-    case DHTLIB_ERROR_CHECKSUM: {
-        Serial.println("Checksum error");
-        break;
-      }
-    case DHTLIB_ERROR_TIMEOUT: {
-        Serial.println("Time out error");
-        break;
-      }
-    default: {
-        Serial.println("Unknown error");
-        break;
-      }
+  dht.begin();
+  //delay(1000);
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  float h = dht.readHumidity();
+  // Read temperature as Celsius
+  float t = dht.readTemperature();
+  digitalWrite(DHT_VCC, LOW);
+  digitalWrite(DHT_DATA, LOW);
+  
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(h) || isnan(t)) {
+    Serial.println("Failed to read from DHT sensor!");
+  } else {
+    Serial.print("Temperature: ");
+    Serial.println(t);
+    Serial.print("Humidity: ");
+    Serial.println(h);
+    startNrf();
+    //delay(100);
+    byte* data = prepareValue((byte) t, 1);
+    volatile boolean sent = writeData(data);
+    Serial.print("Temperature sent: ");
+    Serial.println(sent);
+    //delay(100);
+    data = prepareValue((byte) h, 2);
+    sent = writeData(data);
+    Serial.print("Humidity sent: ");
+    Serial.println(sent);
   }
   delay(100);
-  //delay(INTERVAL - (millis() - time));
   digitalWrite(NRF_VCC, LOW);
   digitalWrite(13, LOW);
   digitalWrite(12, LOW);
   pinMode(11, INPUT);
   digitalWrite(10, LOW);
   digitalWrite(9, LOW);
-  digitalWrite(DHT_VCC, LOW);
-  digitalWrite(DHT_DATA, LOW);
   for (int i = 0; i < INTERVAL; i++) {
-    LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
+    LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_ON);
   }
 }
 
