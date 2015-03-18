@@ -4,6 +4,8 @@
 #define SERIAL_PAYLOAD 27
 #define RADIO_PAYLOAD 32
 #define ADDRESS_LENGTH 5
+#define NRF_VCC 8
+#define NRF_GND 7
 
 byte address[] = {'1','1','1','1','1'};
 
@@ -18,6 +20,10 @@ void setup(void)
   //power nrf
   pinMode(2, OUTPUT);
   digitalWrite(2, HIGH);
+  pinMode(NRF_GND, OUTPUT);
+  pinMode(NRF_VCC, OUTPUT);
+  digitalWrite(NRF_GND, LOW);
+  digitalWrite(NRF_VCC, HIGH);
   
   Serial.begin(115200);
   fdevopen(&my_putc, 0);
