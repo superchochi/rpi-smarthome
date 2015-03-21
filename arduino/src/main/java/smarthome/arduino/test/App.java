@@ -35,6 +35,7 @@ public class App {
     Map<String, Byte> functions = new HashMap<String, Byte>();
     functions.put("func1", Function.FUNCTION_TYPE_TEMPERATURE);
     functions.put("func2", Function.FUNCTION_TYPE_HUMIDITY);
+    functions.put("func3", Function.FUNCTION_TYPE_BATTERY);
     addDevice("dev01", functions);
     Thread.sleep(5000);
     for (TestDevice d : devices) {

@@ -16,15 +16,14 @@ public class Packet {
   public static final int PACKET_DATA_LENGTH = PACKET_LENGTH - PACKET_UID_LENGTH - 2;
   public static final int PACKET_DATA_START_INDEX = PACKET_IS_LAST_INDEX + 1;
 
-  public static final byte PACKET_TYPE_PING = -1;
-  public static final byte PACKET_TYPE_FUNCTION_VALUE = -2;
-  public static final byte PACKET_TYPE_FUNCTION_VALUE_SET = -3;
-  public static final byte PACKET_TYPE_DEVICE_ADD = -4;
-  public static final byte PACKET_TYPE_SERIAL = -5;
+  public static final byte PACKET_TYPE_PING = (byte) 0x05;
+  public static final byte PACKET_TYPE_FUNCTION_VALUE = (byte) 0x02;
+  public static final byte PACKET_TYPE_FUNCTION_VALUE_SET = (byte) 0x04;
+  public static final byte PACKET_TYPE_DEVICE_ADD = (byte) 0x01;
+  public static final byte PACKET_TYPE_SERIAL = (byte) 0x03;
 
-  public static final byte PACKET_FUNCTION_DATA = -100;
-  public static final byte PACKET_FUNCTION_UID_LENGTH = -101;
-  public static final byte PACKET_FUNCTION_VALUE_TYPE = -102;
+  public static final byte PACKET_FUNCTION_DATA = (byte) 0xA0;
+  public static final byte PACKET_FUNCTION_VALUE_TYPE = (byte) 0xB1;
 
   private byte[] uid;
   private byte type;

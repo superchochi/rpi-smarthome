@@ -9,6 +9,7 @@ public class FunctionBean {
   private Object value;
   private byte valueType;
   private long timestamp;
+  private boolean statistics;
 
   public FunctionBean() {
   }
@@ -19,6 +20,7 @@ public class FunctionBean {
     value = function.getValue();
     valueType = function.getValueType();
     timestamp = function.getTimestamp();
+    statistics = function.isStatistics();
   }
 
   public String getUid() {
@@ -59,6 +61,14 @@ public class FunctionBean {
 
   public void setTimestamp(long timestamp) {
     this.timestamp = timestamp;
+  }
+
+  public boolean isStatistics() {
+    return statistics;
+  }
+
+  public void setStatistics(boolean statistics) {
+    this.statistics = statistics;
   }
 
 }

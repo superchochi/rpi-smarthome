@@ -15,7 +15,6 @@ import javax.persistence.Transient;
 
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
-import smarthome.arduino.utils.Utils;
 import smarthome.db.DBManager;
 
 @Entity
@@ -178,13 +177,13 @@ public class Device implements Runnable {
         p = packets0.get(0);
         byte type = p.getType();
         for (int i = 0; i < packets0.size(); i++) {
+          p = packets0.get(i);
           byte[] pData = p.getData();
           for (byte b : pData) {
             dataBytes.add(b);
           }
         }
         byte[] data = new byte[dataBytes.size()];
-        data = new byte[dataBytes.size()];
         for (int i = 0; i < dataBytes.size(); i++) {
           data[i] = dataBytes.get(i);
         }
@@ -207,44 +206,9 @@ public class Device implements Runnable {
       for (int i = 0; i < data.length; i++) {
         if (data[i] == Packet.PACKET_FUNCTION_DATA) {
           i++;
-          byte functionType = data[i++];
-          byte functionUidLength = data[i++];
-          char[] functionUid = new char[functionUidLength];
-          for (int j = 0; j < functionUidLength; j++, i++) {
-            functionUid[j] = (char) data[i];
-          }
-          byte functionValueType = data[i++];
-          byte[] value = null;
-          switch (functionValueType) {
-          case Function.VALUE_TYPE_BOOLEAN:
-            value = new byte[1];
-            value[0] = data[i];
-            break;
-          case Function.VALUE_TYPE_BYTE:
-            value = new byte[1];
-            value[0] = data[i];
-            break;
-          case Function.VALUE_TYPE_DOUBLE:
-            value = new byte[8];
-            for (int j = 0; j < 8; j++) {
-              value[j] = data[i++];
-            }
-            i--;
-            break;
-          case Function.VALUE_TYPE_INTEGER:
-            value = new byte[4];
-            for (int j = 0; j < 4; j++) {
-              value[j] = data[i++];
-            }
-            i--;
-            break;
-          }
           Function f = new Function();
-          f.setUid(new String(functionUid));
-          f.setType(functionType);
-          f.setValueType(functionValueType);
+          i = f.init(data, i);
           f.setDevice(this);
-          f.setValueInternal(Utils.getValueFromByteArray(value, functionValueType), false);
           functions.add(f);
           Logger.debug(TAG, uid + " > New function processed: " + f.getUid());
         }
@@ -274,31 +238,7 @@ public class Device implements Runnable {
       if (function == null || function.getType() != functionType) {
         throw new RuntimeException("Function: " + functionUidStr + " with type: " + functionType + " not found!");
       }
-      byte functionValueType = data[i++];
-      byte[] value = null;
-      switch (functionValueType) {
-      case Function.VALUE_TYPE_BOOLEAN:
-        value = new byte[1];
-        value[0] = data[i++];
-        break;
-      case Function.VALUE_TYPE_BYTE:
-        value = new byte[1];
-        value[0] = data[i++];
-        break;
-      case Function.VALUE_TYPE_DOUBLE:
-        value = new byte[8];
-        for (int j = 0; j < 8; j++) {
-          value[j] = data[i++];
-        }
-        break;
-      case Function.VALUE_TYPE_INTEGER:
-        value = new byte[4];
-        for (int j = 0; j < 4; j++) {
-          value[j] = data[i++];
-        }
-        break;
-      }
-      function.setValueInternal(Utils.getValueFromByteArray(value, functionValueType), true);
+      function.updateValue(data, i);
       if (!online) {
         online = true;
       }

@@ -9,6 +9,8 @@
 #define NRF_CE 9
 #define NRF_CSN 10
 
+const boolean serialDebug = false;
+
 byte address[] = {'1', '1', '1', '1', '1'};
 
 // Set up nRF24L01 radio on SPI bus plus pins 9 & 10
@@ -34,9 +36,10 @@ void setup(void)
   radio.setPayloadSize(RADIO_PAYLOAD);
   radio.openReadingPipe(1, readPipe);
   radio.startListening();
-  //radio.printDetails();
-
-  //Serial.println("sender started");
+  if (serialDebug) {
+    radio.printDetails();
+    Serial.println("sender started");
+  }
 }
 
 void loop(void)
@@ -58,12 +61,9 @@ void loop(void)
       radio.openWritingPipe(dest);
       boolean ok = radio.write(radioData, RADIO_PAYLOAD);
       radio.startListening();
-      //Serial.print("sent: ");
-      //Serial.println(ok);
-      if (ok) {
-        // sent
-      } else {
-        // not sent
+      if (serialDebug) {
+        Serial.print("sent: ");
+        Serial.println(ok);
       }
     }
   }

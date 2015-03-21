@@ -38,24 +38,33 @@
     var icon = "";
     var page = "";
     switch (f.type) {
-    case -100:
+    case -95:
       pre = "Temperature";
       suff = "\xB0C";
       icon = "temperature-icon.png";
       page = "multilevelfunction.html";
       break;
-    case -101:
+    case -94:
       pre = "Humidity"
       suff = "%";
       icon = "humidity-icon.png";
       page = "multilevelfunction.html";
       break;
+    case -93:
+      pre = "Battery"
+      suff = "%";
+      icon = "battery-icon.png";
+      break;
     default:
       suff = "";
     }
+    if (f.statistics) {
+      page += ("?uid=" + uid + "&function=" + f.uid);
+    } else {
+      page += "#";
+    }
     var li = $(document.createElement("li"));
-    var a = $(document.createElement("a")).attr("href", page + "?uid=" + uid + "&function=" + f.uid).attr("target",
-        "_self");
+    var a = $(document.createElement("a")).attr("href", page).attr("target", "_self");
     var img = $(document.createElement("img")).attr("src", icon);
     var h2 = $(document.createElement("h2")).text(f.uid);
     var date = new Date(f.timestamp);

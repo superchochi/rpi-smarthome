@@ -75,7 +75,7 @@ public class TestDevice implements Runnable {
         break;
       }
       updateFunctionsValue();
-      break;
+      //break;
     }
   }
 
@@ -106,6 +106,10 @@ public class TestDevice implements Runnable {
         functionsData.add(Function.VALUE_TYPE_BYTE);
         functionsData.add((byte) 60);
         break;
+      case Function.FUNCTION_TYPE_BATTERY:
+        functionsData.add(Function.VALUE_TYPE_BYTE);
+        functionsData.add((byte) 100);
+        break;
       }
     }
     int j = 0;
@@ -135,6 +139,7 @@ public class TestDevice implements Runnable {
       packet[Packet.PACKET_IS_LAST_INDEX] = 1;
       packets.add(packet);
     }
+
     for (byte[] b : packets) {
       try {
         char[] chars = new char[b.length];
@@ -166,14 +171,17 @@ public class TestDevice implements Runnable {
       }
       switch (fType) {
       case Function.FUNCTION_TYPE_TEMPERATURE: {
-        packet[i++] = Function.VALUE_TYPE_BYTE;
         byte val = (byte) (rand.nextInt(100) - 50);
         packet[i++] = val;
         break;
       }
       case Function.FUNCTION_TYPE_HUMIDITY: {
-        packet[i++] = Function.VALUE_TYPE_BYTE;
         byte val = (byte) (rand.nextInt(100) - 50);
+        packet[i++] = val;
+        break;
+      }
+      case Function.FUNCTION_TYPE_BATTERY: {
+        byte val = (byte) rand.nextInt(100);
         packet[i++] = val;
         break;
       }

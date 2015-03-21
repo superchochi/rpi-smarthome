@@ -4,6 +4,7 @@ custom.name=Arduino Custom
 
 custom.upload.tool=avrdude
 custom.upload.protocol=arduino
+custom.upload.verbose=true
 
 custom.bootloader.tool=avrdude
 custom.bootloader.unlock_bits=0x3F
