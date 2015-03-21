@@ -1,0 +1,8 @@
+used libraries:
+low power - https://github.com/rocketscream/Low-Power
+rf24 - https://github.com/maniacbug/RF24
+dht lib - https://github.com/adafruit/DHT-sensor-library
+
+4.7uF capacitor between vcc and ground on NRF
+firstreading = true; in DHT.cpp->begin
+pin 11 to input on deep sleep -> some nrf power leak (set to output when init)

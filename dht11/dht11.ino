@@ -85,7 +85,7 @@ void initNrf() {
   digitalWrite(NRF_GND, LOW);
   pinMode(NRF_VCC, OUTPUT);
   digitalWrite(NRF_VCC, HIGH);
-  //pinMode(11, OUTPUT);//power leak see top of document
+  pinMode(11, OUTPUT);//power leak see top of document
   radio.begin();
   radio.setRetries(0, 15);
   radio.setAutoAck(true);
@@ -101,6 +101,7 @@ void deinitNrf() {
   digitalWrite(13, LOW);
   digitalWrite(12, LOW);
   digitalWrite(11, LOW);
+  pinMode(11, INPUT);
   digitalWrite(NRF_CSN, LOW);
   digitalWrite(NRF_CE, LOW);
 }
@@ -111,6 +112,7 @@ void setPacketHeaders(byte* packet, byte type, byte last) {
     packet[i] = ctrlAddr[i];
     packet[i + ADDRESS_LENGTH] = address[i];
   }
+  i += ADDRESS_LENGTH;
   packet[i++] = type;
   packet[i] = last;
 }
@@ -186,23 +188,27 @@ void updateValue(byte value, byte function, char* functionUid, byte valueType) {
 void loop()
 {
   long vcc = readVcc();
+  if(vcc > 3000) {
+    vcc = 3000;
+  }
+  byte b = (byte) ((vcc - 2000) / 10);
   initDht();
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   float h = dht.readHumidity();
   // Read temperature as Celsius
-  float t = dht.readTemperature();
+  float t = dht.readTemperature(false);
   deinitDht();
 
   // Check if any reads failed and exit early (to try again).
   if (isnan(h) || isnan(t)) {
     IF_SERIAL_DEBUG(printf("Failed to read from DHT sensor!"));
   } else {
-    IF_SERIAL_DEBUG(printf("Temperature: %d\nHumidity: %d\nBattery: %d\n", (int)t, (int)h, (int)vcc));
+    IF_SERIAL_DEBUG(printf("Temperature: %d\nHumidity: %d\nBattery: %d\n", (int)t, (int)h, (int)b));
     initNrf();
     updateValue((byte) t, FUNCTION_TYPE_TEMPERATURE, tempUid, FUNCTION_VALUE_TYPE_BYTE);
     updateValue((byte) h, FUNCTION_TYPE_HUMIDITY, humiUid, FUNCTION_VALUE_TYPE_BYTE);
-    updateValue((byte) 84, FUNCTION_TYPE_BATTERY, battUid, FUNCTION_VALUE_TYPE_BYTE);
+    updateValue(b, FUNCTION_TYPE_BATTERY, battUid, FUNCTION_VALUE_TYPE_BYTE);
 
     deinitNrf();
   }

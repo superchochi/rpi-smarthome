@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
+import javax.persistence.Transient;
 
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
@@ -40,6 +41,8 @@ public class Function {
   private byte valueType;
   private long timestamp;
   private boolean statistics;
+  @Transient
+  private long lastStoredStatistic = -1;
 
   public String getUid() {
     return uid;
@@ -147,18 +150,20 @@ public class Function {
       }
       break;
     }
-    this.value = Utils.getValueFromByteArray(value, valueType);
+    double newValue = Utils.getValueFromByteArray(value, valueType);
     timestamp = System.currentTimeMillis();
     Map<String, Object> params = new HashMap<String, Object>();
-    params.put("value", this.value);
+    params.put("value", newValue);
     params.put("timestamp", timestamp);
     params.put("id", id);
     DBManager.updateObject("Function.updateValue", this.getClass(), params);
-    Logger.info(TAG, id + " > Value updated: " + this.value);
-    if (statistics) {
-      DBManager.persistObject(new StatisticEntry(id, this.value, valueType, timestamp));
+    Logger.info(TAG, id + " > Value updated: " + newValue);
+    if (statistics && (this.value != newValue || (timestamp - lastStoredStatistic) >= 3540000)) {
+      DBManager.persistObject(new StatisticEntry(id, newValue, valueType, timestamp));
+      lastStoredStatistic = timestamp;
       Logger.info(TAG, id + " > Statistic stored!");
     }
+    this.value = newValue;
   }
 
   @Override
