@@ -4,7 +4,8 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
-import smarthome.arduino.impl.Controller;
+import smarthome.arduino.api.Controller;
+import smarthome.arduino.impl.ControllerImpl;
 import smarthome.arduino.utils.Logger;
 
 @WebListener
@@ -23,7 +24,7 @@ public class ServletContextListenerImpl implements ServletContextListener {
   public void contextInitialized(ServletContextEvent e) {
     Logger.open();
     if (controller == null) {
-      controller = new Controller();
+      controller = new ControllerImpl();
       controller.init();
     }
   }

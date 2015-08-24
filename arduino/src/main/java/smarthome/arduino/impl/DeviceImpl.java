@@ -13,25 +13,28 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
+import smarthome.arduino.api.Device;
+import smarthome.arduino.api.DeviceException;
+import smarthome.arduino.api.Function;
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
 import smarthome.db.DBManager;
 
 @Entity
-@NamedQueries({ @NamedQuery(name = "Devices.getAll", query = "SELECT c FROM Device c"),
-    @NamedQuery(name = "Devices.updateName", query = "UPDATE Device d SET d.name = :name WHERE d.uid = :uid") })
-public class Device implements Runnable {
+@NamedQueries({ @NamedQuery(name = "Devices.getAll", query = "SELECT c FROM DeviceImpl c"),
+    @NamedQuery(name = "Devices.updateName", query = "UPDATE DeviceImpl d SET d.name = :name WHERE d.uid = :uid") })
+public class DeviceImpl implements Device, Runnable {
 
   private static final String TAG = "Device";
 
   @Transient
-  private Controller controller;
+  private ControllerImpl controller;
 
   @Id
   private String uid;
 
   @OneToMany(mappedBy = "device", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<Function> functions = new LinkedList<Function>();
+  private List<AbstractFunction> functions = new LinkedList<AbstractFunction>();
 
   @Transient
   private boolean online = false;
@@ -84,32 +87,32 @@ public class Device implements Runnable {
     return initialized;
   }
 
-  public void setFunctionValue(String functionUid, Object value) throws DeviceException {
+  public void setFunctionValue(String functionUid, double value) throws DeviceException {
 
   }
 
-  public Object getFunctionValue(String functionUid) {
+  public double getFunctionValue(String functionUid) {
     for (Function f : functions) {
       if (f.getUid().equals(functionUid)) {
         return f.getValue();
       }
     }
-    return null;
+    return 0;
   }
 
-  public Object[] getFunctionStatisticValues(String functionUid, long from, long to) {
-    for (Function f : functions) {
-      if (f.getUid().equals(functionUid)) {
-        return f.getStatisticValues(from, to);
-      }
-    }
-    return null;
-  }
+  //  public Object[] getFunctionStatisticValues(String functionUid, long from, long to) {
+  //    for (Function f : functions) {
+  //      if (f.getUid().equals(functionUid)) {
+  //        return f.getStatisticValues(from, to);
+  //      }
+  //    }
+  //    return null;
+  //  }
 
-  public void refresh() throws DeviceException {
-    // TODO Auto-generated method stub
-
-  }
+  //  public void refresh() throws DeviceException {
+  //    // TODO Auto-generated method stub
+  //
+  //  }
 
   public String getName() {
     return name;
@@ -128,7 +131,7 @@ public class Device implements Runnable {
     this.uid = uid;
   }
 
-  protected void setController(Controller controller) {
+  protected void setController(ControllerImpl controller) {
     this.controller = controller;
   }
 
@@ -206,7 +209,7 @@ public class Device implements Runnable {
       for (int i = 0; i < data.length; i++) {
         if (data[i] == Packet.PACKET_FUNCTION_DATA) {
           i++;
-          Function f = new Function();
+          AbstractFunction f = new AbstractFunction();
           i = f.init(data, i);
           f.setDevice(this);
           functions.add(f);
@@ -220,7 +223,7 @@ public class Device implements Runnable {
       break;
     }
     case Packet.PACKET_TYPE_FUNCTION_VALUE: {
-      Function function = null;
+      AbstractFunction function = null;
       int i = 0;
       byte functionType = data[i++];
       byte functionUidLength = data[i++];
@@ -229,7 +232,7 @@ public class Device implements Runnable {
         functionUid[j] = (char) data[i];
       }
       String functionUidStr = new String(functionUid);
-      for (Function f : functions) {
+      for (AbstractFunction f : functions) {
         if (f.getUid().equals(functionUidStr)) {
           function = f;
           break;

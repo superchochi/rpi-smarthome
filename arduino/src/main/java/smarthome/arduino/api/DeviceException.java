@@ -1,4 +1,4 @@
-package smarthome.arduino.impl;
+package smarthome.arduino.api;
 
 public class DeviceException extends Exception {
 

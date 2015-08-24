@@ -1,4 +1,4 @@
-package smarthome.arduino.impl;
+package smarthome.arduino.api;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

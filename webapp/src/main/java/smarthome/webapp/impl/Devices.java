@@ -13,9 +13,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import smarthome.arduino.impl.Controller;
-import smarthome.arduino.impl.Device;
-import smarthome.arduino.impl.StatisticEntry;
+import smarthome.arduino.api.Controller;
+import smarthome.arduino.api.Device;
+import smarthome.arduino.api.StatisticEntry;
 import smarthome.db.DBManager;
 
 @Path("/devices")

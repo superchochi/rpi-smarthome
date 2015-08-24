@@ -9,23 +9,17 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
 import javax.persistence.Transient;
 
+import smarthome.arduino.api.DeviceException;
+import smarthome.arduino.api.Function;
+import smarthome.arduino.api.StatisticEntry;
 import smarthome.arduino.utils.Constants;
 import smarthome.arduino.utils.Logger;
 import smarthome.arduino.utils.Utils;
 import smarthome.db.DBManager;
 
 @Entity
-@NamedQuery(name = "Function.updateValue", query = "UPDATE Function f SET f.value = :value, f.timestamp = :timestamp WHERE f.id = :id")
-public class Function {
-
-  public static final byte VALUE_TYPE_BYTE = (byte) 0xB1;
-  public static final byte VALUE_TYPE_INTEGER = (byte) 0xB2;
-  public static final byte VALUE_TYPE_DOUBLE = (byte) 0xB3;
-  public static final byte VALUE_TYPE_BOOLEAN = (byte) 0xB4;
-
-  public static final byte FUNCTION_TYPE_TEMPERATURE = (byte) 0xA1;
-  public static final byte FUNCTION_TYPE_HUMIDITY = (byte) 0xA2;
-  public static final byte FUNCTION_TYPE_BATTERY = (byte) 0xA3;
+@NamedQuery(name = "Function.updateValue", query = "UPDATE AbstractFunction f SET f.value = :value, f.timestamp = :timestamp WHERE f.id = :id")
+public class AbstractFunction implements Function {
 
   private static final String TAG = "Function";
 
@@ -33,7 +27,7 @@ public class Function {
   private String id;
 
   @ManyToOne
-  private Device device;
+  private DeviceImpl device;
 
   private String uid;
   private byte type;
@@ -72,11 +66,11 @@ public class Function {
     device.setFunctionValue(uid, value);
   }
 
-  public Object[] getStatisticValues(long from, long to) {
-    return null;
-  }
+  //  public Object[] getStatisticValues(long from, long to) {
+  //    return null;
+  //  }
 
-  protected void setDevice(Device device) {
+  protected void setDevice(DeviceImpl device) {
     this.device = device;
     if (uid != null && device != null) {
       id = device.getUid() + "_" + uid;

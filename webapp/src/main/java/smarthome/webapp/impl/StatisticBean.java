@@ -1,6 +1,6 @@
 package smarthome.webapp.impl;
 
-import smarthome.arduino.impl.StatisticEntry;
+import smarthome.arduino.api.StatisticEntry;
 
 public class StatisticBean {
 

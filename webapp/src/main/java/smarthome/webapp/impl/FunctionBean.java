@@ -1,6 +1,6 @@
 package smarthome.webapp.impl;
 
-import smarthome.arduino.impl.Function;
+import smarthome.arduino.api.Function;
 
 public class FunctionBean {
 

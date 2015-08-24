@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import smarthome.arduino.impl.Controller;
-import smarthome.arduino.impl.Function;
+import smarthome.arduino.api.Function;
+import smarthome.arduino.impl.ControllerImpl;
 import smarthome.arduino.impl.Packet;
 import smarthome.arduino.utils.Logger;
 
@@ -19,14 +19,14 @@ public class TestDevice implements Runnable {
   private static final String TAG = "TestDevice";
 
   private Random rand = new Random(System.currentTimeMillis());
-  private Controller controller = null;
+  private ControllerImpl controller = null;
   private byte[] uid = null;
   private Map<byte[], Byte> functions = new HashMap<byte[], Byte>();
 
   private Thread thr;
   private volatile boolean running = false;
 
-  public TestDevice(Controller controller, String uid) {
+  public TestDevice(ControllerImpl controller, String uid) {
     this.controller = controller;
     try {
       this.uid = uid.getBytes();

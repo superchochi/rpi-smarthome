@@ -5,6 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import smarthome.arduino.api.Controller;
+import smarthome.arduino.api.Device;
 import smarthome.arduino.utils.Logger;
 import smarthome.db.DBManager;
 
@@ -13,13 +15,13 @@ import com.pi4j.io.serial.SerialDataEvent;
 import com.pi4j.io.serial.SerialDataListener;
 import com.pi4j.io.serial.SerialFactory;
 
-public class Controller implements SerialDataListener, Runnable {
+public class ControllerImpl implements Controller, SerialDataListener, Runnable {
 
   private static final String TAG = "Controller";
 
   private Serial serial = null;
 
-  private Map<String, Device> devices = new HashMap<String, Device>();
+  private Map<String, DeviceImpl> devices = new HashMap<String, DeviceImpl>();
 
   private Thread thr = null;
   private volatile boolean running = false;
@@ -31,9 +33,9 @@ public class Controller implements SerialDataListener, Runnable {
     thr.start();
 
     DBManager.open();
-    List<Device> devs = DBManager.getObjects("Devices.getAll", Device.class, null);
+    List<DeviceImpl> devs = DBManager.getObjects("Devices.getAll", DeviceImpl.class, null);
     synchronized (devices) {
-      for (Device d : devs) {
+      for (DeviceImpl d : devs) {
         devices.put(d.getUid(), d);
         d.startRunning();
         Logger.info(TAG, "Device loaded: " + d.getUid());
@@ -64,7 +66,7 @@ public class Controller implements SerialDataListener, Runnable {
       }
     }
     synchronized (devices) {
-      for (Device d : devices.values()) {
+      for (DeviceImpl d : devices.values()) {
         d.stopRunning();
         Logger.debug(TAG, "Device stopped: " + d.getUid());
       }
@@ -147,12 +149,12 @@ public class Controller implements SerialDataListener, Runnable {
 
         Logger.debug(TAG, "New packet: " + packet);
         String uid = packet.getUid();
-        Device device;
+        DeviceImpl device;
         synchronized (devices) {
           device = devices.get(uid);
           if (device == null) {
             if (packet.getType() == Packet.PACKET_TYPE_DEVICE_ADD) {
-              device = new Device();
+              device = new DeviceImpl();
               device.setUid(uid);
               device.setController(this);
               device.startRunning();

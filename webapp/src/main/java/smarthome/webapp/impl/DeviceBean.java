@@ -3,9 +3,9 @@ package smarthome.webapp.impl;
 import java.util.LinkedList;
 import java.util.List;
 
-import smarthome.arduino.impl.Device;
-import smarthome.arduino.impl.DeviceException;
-import smarthome.arduino.impl.Function;
+import smarthome.arduino.api.DeviceException;
+import smarthome.arduino.api.Device;
+import smarthome.arduino.api.Function;
 
 public class DeviceBean {
 
