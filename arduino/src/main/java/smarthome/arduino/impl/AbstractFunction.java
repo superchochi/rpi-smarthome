@@ -7,7 +7,6 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
-import javax.persistence.Transient;
 
 import smarthome.arduino.api.DeviceException;
 import smarthome.arduino.api.Function;
@@ -19,7 +18,7 @@ import smarthome.db.DBManager;
 
 @Entity
 @NamedQuery(name = "Function.updateValue", query = "UPDATE AbstractFunction f SET f.value = :value, f.timestamp = :timestamp WHERE f.id = :id")
-public class AbstractFunction implements Function {
+public abstract class AbstractFunction implements Function {
 
   private static final String TAG = "Function";
 
@@ -35,8 +34,13 @@ public class AbstractFunction implements Function {
   private byte valueType;
   private long timestamp;
   private boolean statistics;
-  @Transient
-  private long lastStoredStatistic = -1;
+
+  public AbstractFunction() {
+  }
+
+  public AbstractFunction(byte type) {
+    this.type = type;
+  }
 
   public String getUid() {
     return uid;
@@ -66,10 +70,6 @@ public class AbstractFunction implements Function {
     device.setFunctionValue(uid, value);
   }
 
-  //  public Object[] getStatisticValues(long from, long to) {
-  //    return null;
-  //  }
-
   protected void setDevice(DeviceImpl device) {
     this.device = device;
     if (uid != null && device != null) {
@@ -78,7 +78,6 @@ public class AbstractFunction implements Function {
   }
 
   protected int init(byte[] data, int i) {
-    type = data[i++];
     byte functionUidLength = data[i++];
     char[] functionUid = new char[functionUidLength];
     for (int j = 0; j < functionUidLength; j++, i++) {
@@ -152,12 +151,16 @@ public class AbstractFunction implements Function {
     params.put("id", id);
     DBManager.updateObject("Function.updateValue", this.getClass(), params);
     Logger.info(TAG, id + " > Value updated: " + newValue);
-    if (statistics && (this.value != newValue || (timestamp - lastStoredStatistic) >= 3540000)) {
-      DBManager.persistObject(new StatisticEntry(id, newValue, valueType, timestamp));
-      lastStoredStatistic = timestamp;
-      Logger.info(TAG, id + " > Statistic stored!");
+    if (statistics) {
+      storeNewValue(newValue, this.value);
     }
     this.value = newValue;
+  }
+
+  protected void storeNewValue(double newValue, double oldValue) {
+    //(timestamp - lastStoredStatistic) >= 3540000
+    DBManager.persistObject(new StatisticEntry(id, newValue, valueType, timestamp));
+    Logger.info(TAG, id + " > Statistic stored!");
   }
 
   @Override

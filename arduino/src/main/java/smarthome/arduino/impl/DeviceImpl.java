@@ -88,7 +88,7 @@ public class DeviceImpl implements Device, Runnable {
   }
 
   public void setFunctionValue(String functionUid, double value) throws DeviceException {
-
+    //TODO
   }
 
   public double getFunctionValue(String functionUid) {
@@ -99,20 +99,6 @@ public class DeviceImpl implements Device, Runnable {
     }
     return 0;
   }
-
-  //  public Object[] getFunctionStatisticValues(String functionUid, long from, long to) {
-  //    for (Function f : functions) {
-  //      if (f.getUid().equals(functionUid)) {
-  //        return f.getStatisticValues(from, to);
-  //      }
-  //    }
-  //    return null;
-  //  }
-
-  //  public void refresh() throws DeviceException {
-  //    // TODO Auto-generated method stub
-  //
-  //  }
 
   public String getName() {
     return name;
@@ -209,7 +195,22 @@ public class DeviceImpl implements Device, Runnable {
       for (int i = 0; i < data.length; i++) {
         if (data[i] == Packet.PACKET_FUNCTION_DATA) {
           i++;
-          AbstractFunction f = new AbstractFunction();
+          byte type = data[i++];
+          AbstractFunction f = null;
+          switch (type) {
+          case Function.FUNCTION_TYPE_TEMPERATURE:
+            f = new TemperatureFunction();
+            break;
+          case Function.FUNCTION_TYPE_HUMIDITY:
+            f = new HumidityFunction();
+            break;
+          case Function.FUNCTION_TYPE_BATTERY:
+            f = new BatteryFunction();
+            break;
+          default:
+            Logger.info(TAG, uid + " > Function type not recognized! " + type);
+            continue;
+          }
           i = f.init(data, i);
           f.setDevice(this);
           functions.add(f);
