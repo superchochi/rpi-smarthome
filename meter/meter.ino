@@ -9,20 +9,22 @@ nrf pins: 1(GND):7
           8(IRQ):empty
 */
 #include <stdio.h>
-#include <LowPower.h>
 #include <SPI.h>
 #include <EmonLib.h>
 #include "nRF24L01.h"
 #include "RF24.h"
-#define INTERVAL 15//*4s = 60s
+#define INTERVAL 5
+#define INTERVAL_TOTAL 60
 #define DATA_PAYLOAD 27
 #define RADIO_PAYLOAD 32
 #define ADDRESS_LENGTH 5
 
 #define PACKET_TYPE_PAIR 0x01
 #define PACKET_TYPE_UPDATE 0x02
+#define PACKET_TYPE_SERIAL 0x03
 
-#define FUNCTION_TYPE_METER 0xA4
+#define FUNCTION_TYPE_METER_CURRENT 0xA4
+#define FUNCTION_TYPE_METER_TOTAL 0xA5
 #define FUNCTION_DATA 0xA0
 
 #define FUNCTION_VALUE_TYPE_DOUBLE 0xB3
@@ -39,7 +41,8 @@ nrf pins: 1(GND):7
 byte address[] = { 'm', 'e', 't', '0', '1' };
 byte ctrlAddr[] = { '1', '1', '1', '1', '1' };
 
-char meterUid[] = { 's', 'e', 'n', 's', '1' };
+char currentUid[] = { 'c', 'u', 'r', '0', '1' };
+char totalUid[] = { 't', 'o', 't', '0', '1' };
 
 // Set up nRF24L01 radio on SPI bus plus pins 9 & 10
 RF24 radio(NRF_CE, NRF_CSN);
@@ -48,6 +51,9 @@ EnergyMonitor emon1;// Create an instance
 
 // Single radio pipe address for the 2 nodes to communicate.
 const uint64_t pipes[2] = { 0x6d65743031LL, 0x3131313131LL };//met01 -> 0x6d65743031LL
+
+double total = 0;
+int counter = 0;
 
 void setup()
 {
@@ -105,16 +111,36 @@ void pairDevice() {
   setPacketHeaders(data, PACKET_TYPE_PAIR, 0);
   int i = (ADDRESS_LENGTH * 2) + 2;
   data[i++] = FUNCTION_DATA;//function data
-  data[i++] = FUNCTION_TYPE_METER;//function type meter
+  data[i++] = FUNCTION_TYPE_METER_CURRENT;//function type meter
   data[i++] = ADDRESS_LENGTH;//uid length
   int k = i + ADDRESS_LENGTH;//add uid
   for (int j = 0; i < k; i++, j++) {
-    data[i] = meterUid[j];
+    data[i] = currentUid[j];
   }
   data[i++] = FUNCTION_VALUE_TYPE_DOUBLE;//value type - Double
   for(int j = 0; j < 8; i++, j++) {
     data[i] = 0;//function value
   }
+  
+  data[i++] = FUNCTION_DATA;//function data
+  data[i++] = FUNCTION_TYPE_METER_TOTAL;//function type meter
+  data[i++] = ADDRESS_LENGTH;//uid length
+  data[i++] = totalUid[0];
+  
+  writeData(data);
+  
+  memset(data, 0, RADIO_PAYLOAD);
+  setPacketHeaders(data, PACKET_TYPE_SERIAL, 1);
+  i = (ADDRESS_LENGTH * 2) + 2;
+  k = i + ADDRESS_LENGTH;//add uid
+  for (int j = 1; i < k; i++, j++) {
+    data[i] = totalUid[j];
+  }
+  data[i++] = FUNCTION_VALUE_TYPE_DOUBLE;//value type - Double
+  for(int j = 0; j < 8; i++, j++) {
+    data[i] = 0;//function value
+  }
+  
   for (; i < RADIO_PAYLOAD; i++) {
     data[i] = 0;
   }
@@ -153,17 +179,22 @@ void loop()
     Irms = 0;
   }
   double watt = Irms * 232.5;
+  delay(INTERVAL);
+  total += (watt / (3600 / INTERVAL));
+  counter++;
   //emon1.serialprint();
   IF_SERIAL_DEBUG({
     Serial.print("Watt: ");
     Serial.print(watt);
     Serial.print(" Irms: ");
-    Serial.println(Irms);
+    Serial.print(Irms);
+    Serial.print("Total: ");
+    Serial.println(total);
   });
-  updateValue(watt, FUNCTION_TYPE_METER, meterUid, FUNCTION_VALUE_TYPE_DOUBLE);
-  IF_SERIAL_DEBUG(delay(100));
-  for (int i = 0; i < INTERVAL; i++) {
-    LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
+  updateValue(watt, FUNCTION_TYPE_METER_CURRENT, currentUid, FUNCTION_VALUE_TYPE_DOUBLE);
+  if(INTERVAL * counter >= INTERVAL_TOTAL) {
+    counter = 0;
+    updateValue(total, FUNCTION_TYPE_METER_TOTAL, totalUid, FUNCTION_VALUE_TYPE_DOUBLE);
   }
 }
 
