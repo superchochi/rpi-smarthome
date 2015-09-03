@@ -9,6 +9,8 @@
 		<class>smarthome.arduino.impl.TemperatureFunction</class>
 		<class>smarthome.arduino.impl.HumidityFunction</class>
 		<class>smarthome.arduino.impl.BatteryFunction</class>
+		<class>smarthome.arduino.impl.CurrentMeterFunction</class>
+		<class>smarthome.arduino.impl.TotalMeterFunction</class>
 		<class>smarthome.arduino.api.StatisticEntry</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="org.sqlite.JDBC" />

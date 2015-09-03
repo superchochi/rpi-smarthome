@@ -1,5 +1,6 @@
 package smarthome.arduino.test;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -110,6 +111,24 @@ public class TestDevice implements Runnable {
         functionsData.add(Function.VALUE_TYPE_BYTE);
         functionsData.add((byte) 100);
         break;
+      case Function.FUNCTION_TYPE_METER_CURRENT:
+        functionsData.add(Function.VALUE_TYPE_DOUBLE);
+        byte[] arr = new byte[8];
+        ByteBuffer buff = ByteBuffer.wrap(arr);
+        buff.putDouble(0);
+        for (int i = 0; i < 8; i++) {
+          functionsData.add(buff.get(i));
+        }
+        break;
+      case Function.FUNCTION_TYPE_METER_TOTAL:
+        functionsData.add(Function.VALUE_TYPE_DOUBLE);
+        arr = new byte[8];
+        buff = ByteBuffer.wrap(arr);
+        buff.putDouble(0);
+        for (int i = 0; i < 8; i++) {
+          functionsData.add(buff.get(i));
+        }
+        break;
       }
     }
     int j = 0;
@@ -185,6 +204,15 @@ public class TestDevice implements Runnable {
         packet[i++] = val;
         break;
       }
+      case Function.FUNCTION_TYPE_METER_CURRENT:
+      case Function.FUNCTION_TYPE_METER_TOTAL:
+        byte[] arr = new byte[8];
+        ByteBuffer buff = ByteBuffer.wrap(arr);
+        buff.putDouble(rand.nextDouble() * 1000);
+        for (int j = 0; j < 8; j++) {
+          packet[i++] = buff.get(j);
+        }
+        break;
       }
       while (i < Packet.PACKET_DATA_LENGTH) {
         packet[i++] = 0;

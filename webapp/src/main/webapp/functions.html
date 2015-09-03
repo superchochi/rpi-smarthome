@@ -37,6 +37,7 @@
     var suff = "";
     var icon = "";
     var page = "";
+    var value = f.value;
     switch (f.type) {
     case -95:
       pre = "Temperature";
@@ -55,6 +56,19 @@
       suff = "%";
       icon = "battery-icon.png";
       break;
+    case -92:
+      pre = "CurrentMeter"
+      suff = "W";
+      icon = "meter-icon.png";
+      value = value.toFixed(2);
+      break;
+    case -91:
+      pre = "TotalMeter"
+      suff = "W";
+      icon = "meter-icon.png";
+      value = value.toFixed(2);
+      page = "multilevelfunction.html";
+      break;
     default:
       suff = "";
     }
@@ -69,7 +83,7 @@
     var h2 = $(document.createElement("h2")).text(f.uid);
     var date = new Date(f.timestamp);
     var pStatus = $(document.createElement("p")).addClass("ui-li-aside").text(date.toLocaleString());
-    var pFunction = $(document.createElement("p")).text(pre + ": " + f.value + suff);
+    var pFunction = $(document.createElement("p")).text(pre + ": " + value + suff);
     a.append(img);
     a.append(h2);
     a.append(pFunction);

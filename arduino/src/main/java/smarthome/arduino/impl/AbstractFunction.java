@@ -20,20 +20,19 @@ import smarthome.db.DBManager;
 @NamedQuery(name = "Function.updateValue", query = "UPDATE AbstractFunction f SET f.value = :value, f.timestamp = :timestamp WHERE f.id = :id")
 public abstract class AbstractFunction implements Function {
 
-  private static final String TAG = "Function";
+  protected String TAG = "Function";
 
   @Id
-  private String id;
+  protected String id;
 
   @ManyToOne
-  private DeviceImpl device;
+  protected DeviceImpl device;
 
-  private String uid;
-  private byte type;
-  private double value;
-  private byte valueType;
-  private long timestamp;
-  private boolean statistics;
+  protected String uid;
+  protected byte type;
+  protected double value;
+  protected byte valueType;
+  protected long timestamp;
 
   public AbstractFunction() {
   }
@@ -62,9 +61,7 @@ public abstract class AbstractFunction implements Function {
     return timestamp;
   }
 
-  public boolean isStatistics() {
-    return statistics;
-  }
+  public abstract boolean isStatistics();
 
   public void setValue(double value) throws DeviceException {
     device.setFunctionValue(uid, value);
@@ -111,11 +108,6 @@ public abstract class AbstractFunction implements Function {
       break;
     }
     this.value = Utils.getValueFromByteArray(value, valueType);
-    if (type == FUNCTION_TYPE_BATTERY) {
-      statistics = false;
-    } else {
-      statistics = true;
-    }
     return i;
   }
 
@@ -144,21 +136,20 @@ public abstract class AbstractFunction implements Function {
       break;
     }
     double newValue = Utils.getValueFromByteArray(value, valueType);
-    timestamp = System.currentTimeMillis();
+    timestamp = Utils.getTimestamp();
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("value", newValue);
     params.put("timestamp", timestamp);
     params.put("id", id);
     DBManager.updateObject("Function.updateValue", this.getClass(), params);
     Logger.info(TAG, id + " > Value updated: " + newValue);
-    if (statistics) {
-      storeNewValue(newValue, this.value);
+    if (isStatistics()) {
+      storeNewValue(newValue);
     }
     this.value = newValue;
   }
 
-  protected void storeNewValue(double newValue, double oldValue) {
-    //(timestamp - lastStoredStatistic) >= 3540000
+  protected void storeNewValue(double newValue) {
     DBManager.persistObject(new StatisticEntry(id, newValue, valueType, timestamp));
     Logger.info(TAG, id + " > Statistic stored!");
   }

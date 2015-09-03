@@ -207,6 +207,12 @@ public class DeviceImpl implements Device, Runnable {
           case Function.FUNCTION_TYPE_BATTERY:
             f = new BatteryFunction();
             break;
+          case Function.FUNCTION_TYPE_METER_CURRENT:
+            f = new CurrentMeterFunction();
+            break;
+          case Function.FUNCTION_TYPE_METER_TOTAL:
+            f = new TotalMeterFunction();
+            break;
           default:
             Logger.info(TAG, uid + " > Function type not recognized! " + type);
             continue;

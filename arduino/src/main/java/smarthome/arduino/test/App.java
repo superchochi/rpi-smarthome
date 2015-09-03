@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import smarthome.arduino.api.Device;
 import smarthome.arduino.api.Function;
@@ -15,6 +16,7 @@ import smarthome.arduino.api.StatisticEntry;
 import smarthome.arduino.impl.ControllerImpl;
 import smarthome.arduino.impl.Packet;
 import smarthome.arduino.utils.Logger;
+import smarthome.arduino.utils.Utils;
 import smarthome.db.DBManager;
 
 import com.pi4j.io.serial.SerialDataEvent;
@@ -36,12 +38,52 @@ public class App {
     functions.put("func1", Function.FUNCTION_TYPE_TEMPERATURE);
     functions.put("func2", Function.FUNCTION_TYPE_HUMIDITY);
     functions.put("func3", Function.FUNCTION_TYPE_BATTERY);
+    functions.put("func4", Function.FUNCTION_TYPE_METER_CURRENT);
+    functions.put("func5", Function.FUNCTION_TYPE_METER_TOTAL);
     addDevice("dev01", functions);
     Thread.sleep(5000);
     for (TestDevice d : devices) {
       d.stopRunning(false);
     }
+    generateStats("dev01_func1", Function.VALUE_TYPE_BYTE, 1000);
+    generateStats("dev01_func2", Function.VALUE_TYPE_BYTE, 1000);
+    generateMeterStats("dev01_func5");
     controller.close();
+  }
+
+  private static void generateStats(String id, byte valueType, int count) {
+    long begin = Utils.getDayBeginMillis(Utils.getTimestamp());
+    long end = Utils.getNextDayBeginMillis(begin);
+    Random rand = new Random(begin);
+    for (int i = 0; i < count; i++) {
+      double value = 0;
+      switch (valueType) {
+      case Function.VALUE_TYPE_BOOLEAN:
+        value = rand.nextInt(2);
+        break;
+      case Function.VALUE_TYPE_BYTE:
+        value = rand.nextInt(100);
+        break;
+      case Function.VALUE_TYPE_DOUBLE:
+        value = rand.nextDouble() * 1000;
+        break;
+      case Function.VALUE_TYPE_INTEGER:
+        value = rand.nextInt(100);
+        break;
+      }
+      long interval = rand.nextInt((int) (end - begin));
+      DBManager.persistObject(new StatisticEntry(id, value, valueType, begin + interval));
+    }
+  }
+
+  private static void generateMeterStats(String id) {
+    long begin = Utils.getDayBeginMillis(Utils.getTimestamp());
+    long end = Utils.getNextDayBeginMillis(begin);
+    Random rand = new Random(begin);
+    for (long i = begin; i < end; i += 3600000) {
+      double value = rand.nextDouble() * 1000;
+      DBManager.persistObject(new StatisticEntry(id, value, Function.VALUE_TYPE_DOUBLE, i));
+    }
   }
 
   private static void doInput() {

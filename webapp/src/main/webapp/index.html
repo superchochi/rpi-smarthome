@@ -21,18 +21,25 @@
     var pFunctions = [];
     for (var i = 0; i < device.functions.length; i++) {
       var f = device.functions[i];
+      var value = f.value;
       var suff = "";
       switch (f.type) {
-      case -100:
+      case -95:
         suff = "\xB0C";
         break;
-      case -101:
+      case -94:
+      case -93:
         suff = "%";
+        break;
+      case -92:
+      case -91:
+        suff = "W";
+        value = f.value.toFixed(2);
         break;
       default:
         suff = "";
       }
-      pFunctions[i] = $(document.createElement("p")).text(f.uid + ": " + f.value + suff);
+      pFunctions[i] = $(document.createElement("p")).text(f.uid + ": " + value + suff);
       a.append(pFunctions[i]);
     }
     a.append(pStatus);

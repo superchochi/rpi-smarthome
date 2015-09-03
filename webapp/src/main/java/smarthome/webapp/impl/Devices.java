@@ -1,6 +1,7 @@
 package smarthome.webapp.impl;
 
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +112,7 @@ public class Devices {
     params.put("functionUid", deviceUid + "_" + functionUid);
     int step;
     Map<Long, Double> result = new HashMap<Long, Double>();
-    Calendar cal = Calendar.getInstance();
+    GregorianCalendar cal = new GregorianCalendar();
     cal.setTimeInMillis(timestamp);
     long finalTime;
     if (interval.equalsIgnoreCase("day")) {
