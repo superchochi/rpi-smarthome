@@ -20,11 +20,16 @@ public class Utils {
         val = new Double(value[0]);
         break;
       case Function.VALUE_TYPE_DOUBLE:
-        long l = 0;
-        for (int j = 0; j < 8; j++) {
+//        long l = 0;
+//        for (int j = 0; j < 8; j++) {
+//          l = (l << 8) + (0xff & value[j]);
+//        }
+//        val = new Double(Double.longBitsToDouble(l));
+        int l = 0;
+        for (int j = 7; j >= 4; j--) {
           l = (l << 8) + (0xff & value[j]);
         }
-        val = new Double(Double.longBitsToDouble(l));
+        val = new Float(Float.intBitsToFloat(l));
         break;
       case Function.VALUE_TYPE_INTEGER:
         int n = 0;

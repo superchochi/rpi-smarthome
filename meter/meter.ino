@@ -13,8 +13,9 @@ nrf pins: 1(GND):7
 #include <EmonLib.h>
 #include "nRF24L01.h"
 #include "RF24.h"
-#define INTERVAL 5
-#define INTERVAL_TOTAL 60
+#define SLEEP_INTERVAL 1000
+#define REFRESH_INTERVAL 3
+#define TOTAL_INTERVAL 60
 #define DATA_PAYLOAD 27
 #define RADIO_PAYLOAD 32
 #define ADDRESS_LENGTH 5
@@ -34,9 +35,11 @@ nrf pins: 1(GND):7
 #define NRF_GND 7
 #define NRF_CE 9
 #define NRF_CSN 10
+#define CT_VCC 2
 
-//#define IF_SERIAL_DEBUG(x) ({x;})
-#define IF_SERIAL_DEBUG(x)
+#define IF_SERIAL_DEBUG(x) ({x;})
+//#define IF_SERIAL_DEBUG(x)
+#define emonTxV3
 
 byte address[] = { 'm', 'e', 't', '0', '1' };
 byte ctrlAddr[] = { '1', '1', '1', '1', '1' };
@@ -53,7 +56,8 @@ EnergyMonitor emon1;// Create an instance
 const uint64_t pipes[2] = { 0x6d65743031LL, 0x3131313131LL };//met01 -> 0x6d65743031LL
 
 double total = 0;
-int counter = 0;
+int totalCounter = 0;
+int currentCounter = 0;
 
 void setup()
 {
@@ -63,6 +67,9 @@ void setup()
 
   initNrf();
   IF_SERIAL_DEBUG(radio.printDetails());
+
+  pinMode(CT_VCC, OUTPUT);
+  digitalWrite(CT_VCC, HIGH);
 
   pairDevice();
 
@@ -125,7 +132,7 @@ void pairDevice() {
   data[i++] = FUNCTION_DATA;//function data
   data[i++] = FUNCTION_TYPE_METER_TOTAL;//function type meter
   data[i++] = ADDRESS_LENGTH;//uid length
-  data[i++] = totalUid[0];
+  //data[i++] = totalUid[0];
   
   writeData(data);
   
@@ -133,7 +140,7 @@ void pairDevice() {
   setPacketHeaders(data, PACKET_TYPE_SERIAL, 1);
   i = (ADDRESS_LENGTH * 2) + 2;
   k = i + ADDRESS_LENGTH;//add uid
-  for (int j = 1; i < k; i++, j++) {
+  for (int j = 0; i < k; i++, j++) {
     data[i] = totalUid[j];
   }
   data[i++] = FUNCTION_VALUE_TYPE_DOUBLE;//value type - Double
@@ -160,6 +167,9 @@ void updateValue(double value, byte function, char* functionUid, byte valueType)
   for (int j = 0; i < k; i++, j++) {
     data[i] = functionUid[j];
   }
+  for (int j = 0; j < 4; i++, j++) {
+    data[i] = 0;
+  }
   memcpy(data + i, &value, sizeof(double));
   i += sizeof(double);
   for (; i < RADIO_PAYLOAD; i++) {
@@ -174,28 +184,42 @@ void updateValue(double value, byte function, char* functionUid, byte valueType)
 
 void loop()
 {
+  long busy = millis();
   double Irms = emon1.calcIrms(1480);  // Calculate Irms only - 1480
-  if(Irms < 0.3) {
+  if(Irms < 0) {
+    Irms = -Irms;
+  }
+  Irms -= 0.2;
+  if(Irms < 0) {
     Irms = 0;
   }
   double watt = Irms * 232.5;
-  delay(INTERVAL);
-  total += (watt / (3600 / INTERVAL));
-  counter++;
+  total += (watt / 3600);
+  if(total < 0) {
+    total = 0;
+  }
+  currentCounter++;
+  totalCounter++;
   //emon1.serialprint();
   IF_SERIAL_DEBUG({
     Serial.print("Watt: ");
     Serial.print(watt);
     Serial.print(" Irms: ");
     Serial.print(Irms);
-    Serial.print("Total: ");
+    Serial.print(" Total: ");
     Serial.println(total);
   });
-  updateValue(watt, FUNCTION_TYPE_METER_CURRENT, currentUid, FUNCTION_VALUE_TYPE_DOUBLE);
-  if(INTERVAL * counter >= INTERVAL_TOTAL) {
-    counter = 0;
+  if(currentCounter >= REFRESH_INTERVAL) {
+    currentCounter = 0;
+    updateValue(watt, FUNCTION_TYPE_METER_CURRENT, currentUid, FUNCTION_VALUE_TYPE_DOUBLE);
+  }
+  if(totalCounter >= TOTAL_INTERVAL) {
+    totalCounter = 0;
     updateValue(total, FUNCTION_TYPE_METER_TOTAL, totalUid, FUNCTION_VALUE_TYPE_DOUBLE);
   }
+  busy = millis() - busy;
+  long delayTime = SLEEP_INTERVAL - busy;
+  delay(delayTime > 0 ? delayTime : 0);
 }
 
 boolean writeData(byte* data) {
@@ -204,7 +228,7 @@ boolean writeData(byte* data) {
     for(int i = 0; i < RADIO_PAYLOAD; i++) {
       printf("%x", data[i]);
     }
-    printf("\n");
+    Serial.println();
   });
   radio.stopListening();
   boolean ok = radio.write(data, RADIO_PAYLOAD);

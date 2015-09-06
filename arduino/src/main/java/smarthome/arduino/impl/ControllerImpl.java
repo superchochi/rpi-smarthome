@@ -34,13 +34,19 @@ public class ControllerImpl implements Controller, SerialDataListener, Runnable 
 
     DBManager.open();
     List<DeviceImpl> devs = DBManager.getObjects("Devices.getAll", DeviceImpl.class, null);
-    synchronized (devices) {
-      for (DeviceImpl d : devs) {
-        devices.put(d.getUid(), d);
-        d.startRunning();
-        Logger.info(TAG, "Device loaded: " + d.getUid());
+    if (devs != null) {
+      synchronized (devices) {
+        for (DeviceImpl d : devs) {
+          devices.put(d.getUid(), d);
+          d.startRunning();
+          Logger.info(TAG, "Device loaded: " + d.getUid());
+        }
       }
     }
+    initSerial();
+  }
+
+  protected void initSerial() {
     try {
       serial = SerialFactory.createInstance();
       if (serial.isOpen()) {
@@ -53,7 +59,7 @@ public class ControllerImpl implements Controller, SerialDataListener, Runnable 
     }
   }
 
-  public void close() {
+  protected void deinitSerial() {
     if (serial != null) {
       try {
         serial.removeListener(this);
@@ -65,6 +71,10 @@ public class ControllerImpl implements Controller, SerialDataListener, Runnable 
         Logger.error(TAG, "Serial error!", e);
       }
     }
+  }
+
+  public void close() {
+    deinitSerial();
     synchronized (devices) {
       for (DeviceImpl d : devices.values()) {
         d.stopRunning();

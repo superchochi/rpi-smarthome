@@ -14,6 +14,7 @@ import smarthome.arduino.api.Device;
 import smarthome.arduino.api.Function;
 import smarthome.arduino.api.StatisticEntry;
 import smarthome.arduino.impl.ControllerImpl;
+import smarthome.arduino.impl.ControllerWinImpl;
 import smarthome.arduino.impl.Packet;
 import smarthome.arduino.utils.Logger;
 import smarthome.arduino.utils.Utils;
@@ -31,7 +32,7 @@ public class App {
   public static void main(String[] args) throws Exception {
     System.setProperty(Logger.PROPERTY_LOG_LEVEL, String.valueOf(Logger.DEBUG));
     Logger.open();
-    controller = new ControllerImpl();
+    controller = new ControllerWinImpl();
     controller.init();
     devices = new LinkedList<TestDevice>();
     Map<String, Byte> functions = new HashMap<String, Byte>();
@@ -41,14 +42,16 @@ public class App {
     functions.put("func4", Function.FUNCTION_TYPE_METER_CURRENT);
     functions.put("func5", Function.FUNCTION_TYPE_METER_TOTAL);
     addDevice("dev01", functions);
-    Thread.sleep(5000);
+    Thread.sleep(10000);
     for (TestDevice d : devices) {
       d.stopRunning(false);
     }
-    generateStats("dev01_func1", Function.VALUE_TYPE_BYTE, 1000);
-    generateStats("dev01_func2", Function.VALUE_TYPE_BYTE, 1000);
-    generateMeterStats("dev01_func5");
+    //generateStats("dev01_func1", Function.VALUE_TYPE_BYTE, 1000);
+    //generateStats("dev01_func2", Function.VALUE_TYPE_BYTE, 1000);
+    //generateMeterStats("dev01_func5");
     controller.close();
+    Logger.error(TAG, "Controller stopped");
+    Logger.close();
   }
 
   private static void generateStats(String id, byte valueType, int count) {

@@ -22,7 +22,7 @@ public class TotalMeterFunction extends AbstractFunction {
   @Transient
   private Timer timer = null;
   @Transient
-  private volatile double lastStoredValue = 0;
+  private volatile double lastStoredValue = -1;
   @Transient
   private volatile long lastValueTimestamp = 0;
 
@@ -48,6 +48,9 @@ public class TotalMeterFunction extends AbstractFunction {
   @Override
   protected void storeNewValue(double newValue) {
     lastValueTimestamp = Utils.getTimestamp();
+    if (lastStoredValue == -1) {
+      lastStoredValue = value;
+    }
     if (newValue < value) {
       lastStoredValue -= value;
     }
@@ -62,16 +65,17 @@ public class TotalMeterFunction extends AbstractFunction {
     calendar.set(Calendar.MINUTE, 0);
     calendar.set(Calendar.SECOND, 0);
     calendar.set(Calendar.MILLISECOND, 0);
-    long timestmp = calendar.getTimeInMillis();
     timer = new Timer("Meter timer");
-    timer.scheduleAtFixedRate(new TimerTaskImpl(), timestmp,
+    timer.scheduleAtFixedRate(new TimerTaskImpl(), calendar.getTime(),
         Long.getLong(PROPERTY_METER_STATISTIC_INTERVAL, DEFAULT_METER_STATISTIC_INTERVAL));
+    Logger.info(TAG, id + " > timer set: " + calendar.getTime());
   }
 
   private class TimerTaskImpl extends TimerTask {
 
     @Override
     public void run() {
+      Logger.info(TAG, id + " > timer executed");
       if (lastValueTimestamp == 0) {
         timer.cancel();
         timer.purge();

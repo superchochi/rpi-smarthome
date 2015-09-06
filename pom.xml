@@ -25,7 +25,6 @@
 	</dependencies>
 	<modules>
 		<module>arduino</module>
-		<module></module>
 		<module>webapp</module>
 	</modules>
 </project>

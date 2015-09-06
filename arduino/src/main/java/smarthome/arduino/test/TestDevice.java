@@ -78,6 +78,7 @@ public class TestDevice implements Runnable {
       updateFunctionsValue();
       //break;
     }
+    Logger.debug(TAG, "Device stopped");
   }
 
   private void addDevice() {

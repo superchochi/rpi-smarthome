@@ -25,6 +25,7 @@ public class ServletContextListenerImpl implements ServletContextListener {
     Logger.open();
     if (controller == null) {
       controller = new ControllerImpl();
+      // controller = new ControllerWinImpl();
       controller.init();
     }
   }
