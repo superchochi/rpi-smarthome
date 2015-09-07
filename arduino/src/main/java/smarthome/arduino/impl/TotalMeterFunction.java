@@ -82,7 +82,7 @@ public class TotalMeterFunction extends AbstractFunction {
         timer = null;
       } else {
         double consumption = value - lastStoredValue;
-        long timestamp = Utils.getHourBeginMillis(lastValueTimestamp);
+        long timestamp = Utils.getHourBeginMillis(Utils.getTimestamp());
         lastValueTimestamp = 0;
         DBManager.persistObject(new StatisticEntry(id, consumption, valueType, timestamp));
         Logger.info(TAG, id + " > Statistic stored!");

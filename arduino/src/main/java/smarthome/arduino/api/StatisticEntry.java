@@ -14,7 +14,7 @@ import smarthome.arduino.utils.Constants;
     @NamedQuery(name = "Stats.uid", query = "SELECT s FROM StatisticEntry s WHERE s.functionUid = :functionUid"),
 
     @NamedQuery(name = "Stats.uidTime", query = "SELECT s FROM StatisticEntry s WHERE s.functionUid = :functionUid "
-        + "AND s.timestamp >= :from AND s.timestamp <= :to"),
+        + "AND s.timestamp >= :from AND s.timestamp < :to"),
 
     @NamedQuery(name = "Stats.uidMax", query = "SELECT MAX(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid"),
 
@@ -22,11 +22,11 @@ import smarthome.arduino.utils.Constants;
 
     @NamedQuery(name = "Stats.uidAvg", query = "SELECT AVG(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid"),
 
-    @NamedQuery(name = "Stats.uidTimeMax", query = "SELECT MAX(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid AND s.timestamp >= :from AND s.timestamp <= :to"),
+    @NamedQuery(name = "Stats.uidTimeMax", query = "SELECT MAX(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid AND s.timestamp >= :from AND s.timestamp < :to"),
 
-    @NamedQuery(name = "Stats.uidTimeMin", query = "SELECT MIN(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid AND s.timestamp >= :from AND s.timestamp <= :to"),
+    @NamedQuery(name = "Stats.uidTimeMin", query = "SELECT MIN(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid AND s.timestamp >= :from AND s.timestamp < :to"),
 
-    @NamedQuery(name = "Stats.uidTimeAvg", query = "SELECT AVG(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid AND s.timestamp >= :from AND s.timestamp <= :to") })
+    @NamedQuery(name = "Stats.uidTimeAvg", query = "SELECT AVG(s.value) FROM StatisticEntry s WHERE s.functionUid = :functionUid AND s.timestamp >= :from AND s.timestamp < :to") })
 public class StatisticEntry {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
